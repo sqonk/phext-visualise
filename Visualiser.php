@@ -30,6 +30,9 @@ class Visualiser
         if (! file_exists($javaFile))
             throw new \RuntimeException("The PHEXT Visualiser java file is missing. Please reinstall the package.");
         
+        if (! file_exists($dir))
+            mkdir($dir); // create build folder.
+        
         $classFile = "$dir/PHEXTVisualiser.class";
         if (! file_exists($classFile)) {
             error_log('compiling java class..');
