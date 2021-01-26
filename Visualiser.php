@@ -25,7 +25,7 @@ class Visualiser
     
     public function __construct()
     {
-        $dir = __DIR__."/build";
+        $dir = __DIR__."/.build";
         $javaFile = __DIR__."/PHEXTVisualiser.java";
         if (! file_exists($javaFile))
             throw new \RuntimeException("The PHEXT Visualiser java file is missing. Please reinstall the package.");
