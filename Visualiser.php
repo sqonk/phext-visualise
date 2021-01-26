@@ -39,14 +39,13 @@ class Visualiser
             `javac -d $dir -encoding UTF8 $javaFile`;
         }
         
-        println('spinning up visualiser instance..');
+        error_log('spinning up visualiser instance..');
         
 		$fdSpec = [
 		    ['pipe', 'r'], // stdin
 		    ['pipe', 'w'], // stdout
 		    ['file', __DIR__.'/error-output.txt', 'a'], // stderr
 		];
-        
         
 		$this->process = proc_open("java -cp $dir PHEXTVisualiser", $fdSpec, $pipes, getcwd());
 		if (! is_resource($this->process)) {
