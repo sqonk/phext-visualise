@@ -2,3 +2,4 @@ build
 .windowSettings
 error-output.txt
 test.php
+.build

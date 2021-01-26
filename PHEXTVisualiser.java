@@ -176,22 +176,7 @@ class PHEXTVisualiser {
                 pfolder.mkdir();
             
             this.settingsFile = persistPath + "/" + title.replaceAll(" ", "");
-            
-            // File sf = new File(settingsFile);
-  //           if (sf.exists())
-  //           {
-  //               try {
-  //                   String saved = new String(Files.readAllBytes(Paths.get(this.settingsFile)));
-  //                   String[] items = saved.trim().split(",");
-  //                   int x = Integer.parseInt(items[0]);
-  //                   int y = Integer.parseInt(items[1]);
-  //                   this.setLocation(x, y);
-  //               }
-  //               catch (IOException err) {
-  //                   System.err.println("Error attempting to read persistent window data.");
-  //                   System.err.println(err.getMessage());
-  //               }
-  //           }
+
             this.storeLoc = true;
         }
         
@@ -206,22 +191,6 @@ class PHEXTVisualiser {
                 this.canvases.add(c);
             }
         }
-        
-        // public void setLocation(int x, int y) {
-        //     super.setLocation(x, y);
-        //     if (this.storeLoc) {
-        //         try {
-        //             FileWriter fw = new FileWriter(this.settingsFile, false);
-        //             fw.write(x+","+y);
-        //             fw.flush();
-        //         }
-        //         catch (IOException err) {
-        //             System.err.println("Error attempting to store persistent window data.");
-        //             System.err.println(err.getMessage());
-        //         }
-        //
-        //     }
-        // }
         
         public String title() {
             return this.title;
@@ -261,10 +230,7 @@ class PHEXTVisualiser {
             {
                 Dimension scaled = this.aspectFit(this.image.getWidth(null), this.image.getHeight(null));
                 Dimension bounds = this.getSize();
-                g.setColor(Color.RED);
-                g.drawRect(0, 0, bounds.width, bounds.height);
-                //System.err.println(bounds);
-                //System.err.println(scaled);
+
                 int shortestContainerSide = Math.min(bounds.width, bounds.height);
                 int x = (bounds.width / 2) - (scaled.width / 2);
                 int y = (bounds.height / 2) - (scaled.height / 2);
