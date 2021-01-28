@@ -12,7 +12,7 @@ class Visualiser
     
 	protected bool $alive = false;
 	protected string $inboundBuffer = "";
-    protected array $windows = [];
+    protected array $windowStats = [];
     
     protected $quitCallback;
     
@@ -23,7 +23,13 @@ class Visualiser
     protected const TERMINATOR = "\0\0";
     protected const BOUNDARY = "#--0--#";
     
-    public function __construct()
+    /**
+     * Create a new visualiser instance capable of spawning its own set of windows.
+     * 
+     * -- parameters:
+     * @param $logJavaErrorsToFile The PHEXTVisualiser java class logs all exceptions and errors to the StdErr stream. When this parameter is set to TRUE all such erros will be logged to a file in the current working directory. When set to FALSE the same errors will be printed to the console instead.
+     */
+    public function __construct(bool $logJavaErrorsToFile = false)
     {
         $dir = __DIR__."/.build";
         $javaFile = __DIR__."/PHEXTVisualiser.java";
@@ -44,8 +50,11 @@ class Visualiser
 		$fdSpec = [
 		    ['pipe', 'r'], // stdin
 		    ['pipe', 'w'], // stdout
-		    ['file', __DIR__.'/error-output.txt', 'a'], // stderr
 		];
+        if ($logJavaErrorsToFile)
+            $fdSpec[] = ['file', __DIR__.'/error-output.txt', 'a'];
+        else
+            $fdSpec[] = ['pipe', 'w']; // stderr pipe
         
 		$this->process = proc_open("java -cp $dir PHEXTVisualiser", $fdSpec, $pipes, getcwd());
 		if (! is_resource($this->process)) {
@@ -54,9 +63,11 @@ class Visualiser
         
         $this->alive = true;
         [$this->stdin, $this->stdout] = $pipes;
-		//stream_set_blocking($this->stdin, false);
-		//stream_set_blocking($this->stdout, false);
-		//stream_set_blocking($this->stderr, false);
+        
+        if (count($pipes) == 3) {
+            $this->stderr = $pipes[2];
+            stream_set_blocking($this->stderr, false);
+        }
     }
     
 	public function __destruct()
@@ -74,7 +85,8 @@ class Visualiser
 		{
 			fclose($this->stdin);
 			fclose($this->stdout);
-			//fclose($this->stderr);
+            if ($this->stderr)
+			    fclose($this->stderr);
 			
 			proc_terminate($this->process);
 			$this->alive = false;
@@ -96,13 +108,28 @@ class Visualiser
             
 			return false;
 		}
-		else
-		{
-			//if ($err = fread($this->stderr, 1024*1024))
-			//	error_log($err);
+		else {
+			$this->_checkStdErr();
 		}
 		return true;
 	}
+    
+    // Check for data in the error stream. Returns TRUE if something was found.
+    protected function _checkStdErr(): bool
+    {
+        if ($this->stderr)
+        {
+            $err = '';
+			while ($str = fread($this->stderr, 1024*1024))
+				$err .= $str;
+            
+            if ($err)
+                error_log($err);
+            
+            return true;
+        }
+        return false;
+    }
 	
 	protected function _send(int $command, string $data, bool $expectReply): ?string
 	{
@@ -117,16 +144,32 @@ class Visualiser
         return $expectReply ? $this->_waitForResponse() : null;
 	}
     
+    // Convert a GD Image object into an encoded JPEG string.
+    private function _convertGD(GDImage $image): string
+    {
+        ob_start();
+        imagejpeg($image);
+        $jpeg = ob_get_contents();
+        ob_end_clean();
+        return $jpeg;
+    }
+    
 	/**
 	 * Read the latest event sent downstream from the Visualiser app.
 	 */
 	public function _waitForResponse(): ?string
 	{
-        println('waiting for reply..');
+        // First check the error stream, as the Stdout will block until it gets something.
+        $this->_checkStdErr(); 
+        
         while (! str_ends_with($this->inboundBuffer, self::TERMINATOR))
         {
             if ($read = fread($this->stdout, 1024*1024)) {
                 $this->inboundBuffer .= $read;
+            }
+            else {
+                $this->_checkStdErr(); 
+                usleep(100);
             }
         }
 		$data = substr($this->inboundBuffer, 0, -strlen(self::TERMINATOR));
@@ -155,37 +198,74 @@ class Visualiser
     public function open(string $title, int $width, int $height, int $imageCount = 1): ?int
     {
         $config = implode(self::BOUNDARY, [$title, $width, $height, $imageCount]);
-        $resp = $this->_send(command:self::NEW_WINDOW, data:$config, expectReply:true);
-        return $resp ? (int)$resp : null;
+        if ($resp = $this->_send(command:self::NEW_WINDOW, data:$config, expectReply:true))
+        {
+            $id = (int)$resp;
+            $this->windowStats[$id] = ['count' => 0, 'start' => time()];
+            return $id;
+        }
+        
+        return null;
     }
 	
     public function update(int $windowID, GDImage|string $image = null, ?array $images = null): void
     {
+        static $updateCounts = 0; $updateCounts++;
+        $stats = $this->windowStats[$windowID];
+        $stats['count'] += 1;
+        
+        $fps = $stats['count'];
+        if ($timeDiff = time() - $stats['start'])
+            $fps /= $timeDiff;
+
+        $convert = function($img) {
+            return $img instanceof GDImage ? $this->_convertGD($img) : $img;
+        }; 
+        
         if ($images) {
-            $converted = array_map(function($img) {
-                $str = is_string($img) ? $img : $this->_convertGD($img);
-                return base64_encode($str);
-            }, $images);
+            $converted = array_map(fn($img) => base64_encode($convert($img)), $images);
         }
         
         else if ($image) {
-            $converted = is_string($image) ? [ base64_encode($image) ] : [ base64_encode($this->_convertGD($image)) ];
+            $converted = [ base64_encode($convert($image)) ];
         }
             
         else
             throw new Exception('Either the $image or $images parameter must be set.');
         
-        $config = $windowID.self::BOUNDARY.implode(self::BOUNDARY, $converted);
-        $this->_send(command:self::UPDATE_IMG, data:$config, expectReply:false);
+        $ack = 1; 
+        if ($stats['count'] > 3) {
+            $ack = 1; 
+            $stats['count'] = 0;
+        }
+        
+        $this->windowStats[$windowID] = $stats; println($updateCounts);
+        
+        $config = implode(self::BOUNDARY, array_merge([$windowID, $ack], $converted));
+        $this->_send(command:self::UPDATE_IMG, data:$config, expectReply:(bool)$ack);
     }
     
-    private function _convertGD(GDImage $image): string
+    /**
+     * Start a generator loop, with each cycle generating a new image frame
+     * to be drawn on.
+     * 
+     * The loop will run until the frame limit is reached or the loop is broken via some other means.
+     */
+    public function animate(int $width, int $height, int $frames = 0, string $title = '')
     {
-        ob_start();
-        imagejpeg($image);
-        $jpeg = ob_get_contents();
-        ob_end_clean();
-        return $jpeg;
+        $id = $this->open(title:$title, width:$width, height:$height);
+        
+        $i = 0;
+        while ($frames == 0 or ($frames > 0 && $i < $frames))
+        {
+            if (! $img = imagecreatetruecolor($width, $height))
+                throw new \RuntimeException("A new image could not be created.");
+            
+            yield $i => $img;
+            
+            $this->update(windowID:$id, image:$img);
+            $i++;
+        }
     }
 }
 

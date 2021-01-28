@@ -5,14 +5,17 @@ import java.io.*;
 import java.nio.file.*;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-class PHEXTVisualiser {
+class PHEXTVisualiser implements Runnable {
     
     static PHEXTVisualiser sharedInstance;
     
     private StringBuffer inboundData;
     private Hashtable<Integer,ImageWindow> windows;
     private int nextID = 1;
+    private ConcurrentLinkedQueue<String> inputQueue;
+    private Thread scanner;
     
     static protected final int NEW_WINDOW = 1;
     static protected final int CLOSE_WINDOW = 2;
@@ -24,18 +27,55 @@ class PHEXTVisualiser {
     static public void main(String[] args) 
     {
         sharedInstance = new PHEXTVisualiser();
-        sharedInstance.watchForInput();
+        sharedInstance.startScanner(); // Start background watcher.
+        sharedInstance.watchQueue();
     }
     
     public PHEXTVisualiser()
     {
         this.inboundData = new StringBuffer();
         this.windows = new Hashtable<>();
+        this.inputQueue = new ConcurrentLinkedQueue<String>();
     }
     
-    private void watchForInput()
+    // process commands as they land on the queue.
+    private void watchQueue()
     {
-        BufferedInputStream stdin = new BufferedInputStream(System.in);
+        try
+        {
+            while (true)
+            {
+                try {
+                    String data = this.inputQueue.remove();
+                    int command = Character.getNumericValue(data.charAt(0));
+                    data = data.substring(1);
+                    
+                    this.dispatchInput(command, data);
+                }
+                catch (NoSuchElementException noItem) {
+                    
+                }
+                
+                Thread.sleep(50);
+            }
+        }
+        catch (Exception error) {
+            System.err.println("Exception occurred.");
+            System.err.println(error.toString());
+            error.printStackTrace();
+        }
+    }
+    
+    public void startScanner() {
+        this.scanner = new Thread(this);
+        this.scanner.start();
+    }
+    
+    // Background thread picks up new events from Stdin as they arrive.
+    public void run()
+    {
+        System.err.println("Starting watcher.");
+        BufferedInputStream stdin = new BufferedInputStream(System.in, 1024*1024*10);
         int blen = 1024*1024;
         byte[] buffer = new byte[blen];
         int tlen = this.TERMINATOR.length();
@@ -43,27 +83,25 @@ class PHEXTVisualiser {
         {
             while (true)
             {
-                if (stdin.available() > 0) {
+                if (stdin.available() > 0) 
+                {
                     int upto = Math.min(blen, stdin.available());
                     int bytesRead = stdin.read(buffer, 0, upto);
-                    if (bytesRead > -1) {
+                    if (bytesRead > -1) { 
                         this.inboundData.append(new String(buffer, 0, bytesRead));
                     }
-                
+            
                     int termPos = inboundData.indexOf(this.TERMINATOR);
                     if (termPos > -1) {
-                        String data = inboundData.substring(1, termPos);
-                        int command = Character.getNumericValue(inboundData.charAt(0));
-                        
+                        System.err.println("Got input");
+                        String data = inboundData.substring(0, termPos);
+                        this.inputQueue.add(data);
+                    
                         // Remove the data packet from the stream.
                         this.inboundData.delete(0, termPos+tlen);
-                        
-                        dispatchInput(command, data);
                     }
                 }
-                else {
-                    Thread.sleep(50);
-                }
+                Thread.sleep(50);
             }
         }
         catch (Exception error) {
@@ -128,14 +166,17 @@ class PHEXTVisualiser {
         return window.id();
     }
     
-    protected void updateImages(String data) throws Exception {
+    protected int ucount = 0;
+    
+    protected void updateImages(String data) throws Exception { ucount++;
          String[] items = data.split(this.BOUNDARY);
          int windowID = Integer.parseInt(items[0]);
+         int ack = Integer.parseInt(items[1]);
          
          Base64.Decoder decoder = Base64.getDecoder();  
          Vector<Image> images = new Vector<Image>();
          
-         for (int i = 1; i < items.length; i++)
+         for (int i = 2; i < items.length; i++)
          {
              byte[] imgData = decoder.decode(items[i]);
              Image img = ImageIO.read(new ByteArrayInputStream(imgData));
@@ -144,8 +185,11 @@ class PHEXTVisualiser {
          
          ImageWindow win = this.windows.get(new Integer(windowID));
          win.updateImages(images);
-         win.getContentPane().invalidate();
-         win.getContentPane().repaint();
+         System.err.println(ucount);
+         if (ack != 0) {
+             System.err.println("Keyframe reply");
+             this.sendOutput("1");
+         }
     }
     
     class ImageWindow extends JFrame
@@ -155,8 +199,6 @@ class PHEXTVisualiser {
         
         protected Image[] images; 
         protected Vector<ImageCanvas> canvases;
-        protected String settingsFile;
-        protected boolean storeLoc = false;
         
         public ImageWindow(String title, int imageCount, int id)
         {
@@ -169,15 +211,6 @@ class PHEXTVisualiser {
     		setResizable(true);
             setVisible(true);
             setLocationRelativeTo(null);
-            
-            String persistPath = ".windowSettings";
-            File pfolder = new File(persistPath);
-            if (! pfolder.exists())
-                pfolder.mkdir();
-            
-            this.settingsFile = persistPath + "/" + title.replaceAll(" ", "");
-
-            this.storeLoc = true;
         }
         
         public void prepareImageAreas() 
@@ -202,7 +235,7 @@ class PHEXTVisualiser {
         
         public void updateImages(Vector<Image> images) {
             int limit = Math.min(images.size(), this.canvases.size());
-            System.err.println("updating images for window: "+images.size()+" "+limit);
+            
             for (int i = 0; i < limit; i++) {
                 this.canvases.get(i).setImage(images.get(i));
                 this.canvases.get(i).repaint();
