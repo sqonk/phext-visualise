@@ -3,6 +3,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
+import java.nio.ByteBuffer;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -11,10 +12,10 @@ class PHEXTVisualiser implements Runnable {
     
     static PHEXTVisualiser sharedInstance;
     
-    private StringBuffer inboundData;
+    private ByteArrayOutputStream inboundData;
     private Hashtable<Integer,ImageWindow> windows;
     private int nextID = 1;
-    private ConcurrentLinkedQueue<String> inputQueue;
+    private ConcurrentLinkedQueue<ByteBuffer> inputQueue;
     private Thread scanner;
     
     static protected final int NEW_WINDOW = 1;
@@ -33,9 +34,9 @@ class PHEXTVisualiser implements Runnable {
     
     public PHEXTVisualiser()
     {
-        this.inboundData = new StringBuffer();
+        this.inboundData = new ByteArrayOutputStream();
         this.windows = new Hashtable<>();
-        this.inputQueue = new ConcurrentLinkedQueue<String>();
+        this.inputQueue = new ConcurrentLinkedQueue<ByteBuffer>();
     }
     
     // process commands as they land on the queue.
@@ -46,9 +47,11 @@ class PHEXTVisualiser implements Runnable {
             while (true)
             {
                 try {
-                    String data = this.inputQueue.remove();
-                    int command = Character.getNumericValue(data.charAt(0));
-                    data = data.substring(1);
+                    ByteBuffer data = this.inputQueue.remove();
+                    //int command = Character.getNumericValue(data.charAt(0));
+                    int command = data.getInt();
+                    //data = data.substring(1);
+                    //System.err.println("command: "+command);
                     
                     this.dispatchInput(command, data);
                 }
@@ -74,34 +77,44 @@ class PHEXTVisualiser implements Runnable {
     // Background thread picks up new events from Stdin as they arrive.
     public void run()
     {
-        System.err.println("Starting watcher.");
-        BufferedInputStream stdin = new BufferedInputStream(System.in, 1024*1024*10);
+        BufferedInputStream stdin = new BufferedInputStream(System.in);
         int blen = 1024*1024;
         byte[] buffer = new byte[blen];
-        int tlen = this.TERMINATOR.length();
+        //int tlen = this.TERMINATOR.length();
         try
         {
             while (true)
             {
-                if (stdin.available() > 0) 
+                int totalRead = 0;
+                while (stdin.available() > 0) 
                 {
                     int upto = Math.min(blen, stdin.available());
                     int bytesRead = stdin.read(buffer, 0, upto);
                     if (bytesRead > -1) { 
-                        this.inboundData.append(new String(buffer, 0, bytesRead));
-                    }
-            
-                    int termPos = inboundData.indexOf(this.TERMINATOR);
-                    if (termPos > -1) {
-                        System.err.println("Got input");
-                        String data = inboundData.substring(0, termPos);
-                        this.inputQueue.add(data);
-                    
-                        // Remove the data packet from the stream.
-                        this.inboundData.delete(0, termPos+tlen);
+                        //this.inboundData.append(new String(buffer, 0, bytesRead));
+                        this.inboundData.write(buffer, 0, bytesRead);
+                        totalRead += bytesRead;
                     }
                 }
-                Thread.sleep(50);
+                
+            
+                //int termPos = inboundData.indexOf(this.TERMINATOR);
+                if (totalRead > 0) {
+                    //String data = inboundData.substring(0, termPos);
+                    ByteBuffer packet = ByteBuffer.wrap(this.inboundData.toByteArray());
+                    int command = packet.getInt();
+                    packet.rewind();
+                    this.inputQueue.add(packet);
+                
+                    // Remove the data packet from the stream.
+                    //this.inboundData.delete(0, termPos+tlen);
+                    this.inboundData = new ByteArrayOutputStream();
+                    
+                    if (command == UPDATE_IMG)
+                        this.sendAck();
+                }
+                else
+                    Thread.sleep(10);
             }
         }
         catch (Exception error) {
@@ -111,11 +124,11 @@ class PHEXTVisualiser implements Runnable {
         }
     }
     
-    private void dispatchInput(int command, String data) throws Exception
+    private void dispatchInput(int command, ByteBuffer data) throws Exception
     {
         switch (command) {
             case NEW_WINDOW:
-                this.sendOutput(this.makeWindow(data).toString());
+                this.makeWindow(data);
                 break;
                 
             case UPDATE_IMG:
@@ -129,23 +142,33 @@ class PHEXTVisualiser implements Runnable {
     
     protected void sendOutput(String response) throws java.io.IOException
     {
-        response = response + this.TERMINATOR;
-        
+        //response = response + this.TERMINATOR;
+        //System.err.println("sending response");
         BufferedOutputStream os = new BufferedOutputStream(System.out);
         os.write(response.getBytes(), 0, response.length());
         os.flush();
     }
     
-    protected Integer makeWindow(String data) throws Exception {
-        String[] items = data.split(this.BOUNDARY);
-        if (items.length != 4) {
-            throw new Exception("Incorrect amount of items supplied to new window: "+items.length);
-        }
-        int width = Integer.parseInt(items[1]);
-        int height = Integer.parseInt(items[2]);
-        int imgCount = Integer.parseInt(items[3]);
+    protected void sendAck() throws java.io.IOException {  //System.err.println("sending ack");
+        System.out.print(true);
+        System.out.flush();
+    }
+    
+    protected void makeWindow(ByteBuffer data) throws Exception {
+        //String[] items = data.split(this.BOUNDARY);
+        // if (items.length != 4) {
+        //     throw new Exception("Incorrect amount of items supplied to new window: "+items.length);
+        // }
+        int width = data.getInt();
+        int height = data.getInt();
+        int imgCount = data.getInt();
         
-        ImageWindow window = new ImageWindow(items[0], imgCount, this.nextID);
+        int titleLen = data.getInt();
+        byte[] tbuf = new byte[titleLen];
+        data.get(tbuf, 0, titleLen);
+        String title = new String(tbuf);
+        
+        ImageWindow window = new ImageWindow(title, imgCount, this.nextID);
         window.setSize(width, height);
         window.setLocationRelativeTo(null);
         
@@ -163,33 +186,30 @@ class PHEXTVisualiser implements Runnable {
         
         windows.put(window.id(), window);
         
-        return window.id();
+        this.sendOutput(window.id().toString());
     }
     
     protected int ucount = 0;
     
-    protected void updateImages(String data) throws Exception { ucount++;
-         String[] items = data.split(this.BOUNDARY);
-         int windowID = Integer.parseInt(items[0]);
-         int ack = Integer.parseInt(items[1]);
+    protected void updateImages(ByteBuffer data) throws Exception { ucount++;
+        int windowID = data.getInt();
          
-         Base64.Decoder decoder = Base64.getDecoder();  
-         Vector<Image> images = new Vector<Image>();
+         //Base64.Decoder decoder = Base64.getDecoder();  
+        Vector<Image> images = new Vector<Image>();
          
-         for (int i = 2; i < items.length; i++)
-         {
-             byte[] imgData = decoder.decode(items[i]);
-             Image img = ImageIO.read(new ByteArrayInputStream(imgData));
-             images.add(img);
-         }
+        while (data.remaining() > 0)
+        {
+            int length = data.getInt(); //System.err.println("img len "+length);
+            byte[] imgData = new byte[length];
+            data.get(imgData, 0, length); 
+            images.add(ImageIO.read(new ByteArrayInputStream(imgData)));
+        }
          
-         ImageWindow win = this.windows.get(new Integer(windowID));
-         win.updateImages(images);
-         System.err.println(ucount);
-         if (ack != 0) {
-             System.err.println("Keyframe reply");
-             this.sendOutput("1");
-         }
+        ImageWindow win = this.windows.get(new Integer(windowID));
+        win.updateImages(images);
+        //System.err.println(ucount);
+        
+        //this.sendAck();
     }
     
     class ImageWindow extends JFrame
@@ -236,10 +256,19 @@ class PHEXTVisualiser implements Runnable {
         public void updateImages(Vector<Image> images) {
             int limit = Math.min(images.size(), this.canvases.size());
             
+            Vector<ImageCanvas> canvases = this.canvases;
+            
             for (int i = 0; i < limit; i++) {
-                this.canvases.get(i).setImage(images.get(i));
-                this.canvases.get(i).repaint();
+                canvases.get(i).setImage(images.get(i));
             }
+            
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    for (int i = 0; i < limit; i++)
+                        canvases.get(i).repaint();
+                }
+            });
+            
         }
     }
     

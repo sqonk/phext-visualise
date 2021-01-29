@@ -4,6 +4,17 @@ namespace sqonk\phext\visualise;
 
 use \GDImage;
 
+define('PHEXT_BIG_ENDIAN', pack('L', 1) === pack('N', 1));
+
+// Pack for forced BIG ENDIAN byte order.
+function be_pack(string $format, $value): string {
+    $packed = pack($format, $value);
+    if (! PHEXT_BIG_ENDIAN) {
+        $packed = strrev($packed);
+    }
+    return $packed;
+}
+
 class Visualiser
 {
     protected $stdin;
@@ -68,6 +79,7 @@ class Visualiser
             $this->stderr = $pipes[2];
             stream_set_blocking($this->stderr, false);
         }
+        stream_set_blocking($this->stdout, false);
     }
     
 	public function __destruct()
@@ -138,7 +150,7 @@ class Visualiser
             return null;
 		}
 			
-		fwrite($this->stdin, "{$command}$data".self::TERMINATOR);
+		fwrite($this->stdin, be_pack('l', $command).$data);
 		fflush($this->stdin);
         
         return $expectReply ? $this->_waitForResponse() : null;
@@ -159,20 +171,19 @@ class Visualiser
 	 */
 	public function _waitForResponse(): ?string
 	{
-        // First check the error stream, as the Stdout will block until it gets something.
-        $this->_checkStdErr(); 
-        
-        while (! str_ends_with($this->inboundBuffer, self::TERMINATOR))
+        while (strlen($this->inboundBuffer) == 0)
         {
-            if ($read = fread($this->stdout, 1024*1024)) {
+            while ($read = fread($this->stdout, 1024*1024)) {
                 $this->inboundBuffer .= $read;
             }
-            else {
-                $this->_checkStdErr(); 
+
+            if (! $read) {
+                $this->_checkStdErr();
                 usleep(100);
             }
         }
-		$data = substr($this->inboundBuffer, 0, -strlen(self::TERMINATOR));
+		//$data = substr($this->inboundBuffer, 0, -strlen(self::TERMINATOR));
+        $data = $this->inboundBuffer;
         $this->inboundBuffer = '';     
 		return $data;
 	}
@@ -197,7 +208,9 @@ class Visualiser
     
     public function open(string $title, int $width, int $height, int $imageCount = 1): ?int
     {
-        $config = implode(self::BOUNDARY, [$title, $width, $height, $imageCount]);
+        //$config = implode(self::BOUNDARY, [$title, $width, $height, $imageCount]);
+        $config = be_pack('l', $width).be_pack('l', $height).be_pack('l', $imageCount).
+            be_pack('l', strlen($title)).$title;
         if ($resp = $this->_send(command:self::NEW_WINDOW, data:$config, expectReply:true))
         {
             $id = (int)$resp;
@@ -217,32 +230,30 @@ class Visualiser
         $fps = $stats['count'];
         if ($timeDiff = time() - $stats['start'])
             $fps /= $timeDiff;
+        
+        println('fps:', $fps);
 
         $convert = function($img) {
-            return $img instanceof GDImage ? $this->_convertGD($img) : $img;
+            $img_str = ($img instanceof GDImage) ? $this->_convertGD($img) : $img;
+            return be_pack('l', strlen($img_str)).$img_str;
         }; 
         
         if ($images) {
-            $converted = array_map(fn($img) => base64_encode($convert($img)), $images);
+            //$converted = array_map(fn($img) => base64_encode($convert($img)), $images);
+            $converted = implode('', array_map($convert, $images));
         }
         
         else if ($image) {
-            $converted = [ base64_encode($convert($image)) ];
+            $converted = $convert($image);
         }
             
         else
             throw new Exception('Either the $image or $images parameter must be set.');
         
-        $ack = 1; 
-        if ($stats['count'] > 3) {
-            $ack = 1; 
-            $stats['count'] = 0;
-        }
+        $this->windowStats[$windowID] = $stats; 
         
-        $this->windowStats[$windowID] = $stats; println($updateCounts);
-        
-        $config = implode(self::BOUNDARY, array_merge([$windowID, $ack], $converted));
-        $this->_send(command:self::UPDATE_IMG, data:$config, expectReply:(bool)$ack);
+        $data = be_pack('l', $windowID).$converted;
+        $this->_send(command:self::UPDATE_IMG, data:$data, expectReply:true);
     }
     
     /**
