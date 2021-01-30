@@ -50,8 +50,6 @@ class Visualiser
     protected const CLOSE_WINDOW = 2;
     protected const UPDATE_IMG = 3;
     
-    protected const TERMINATOR = "\0\0";
-    protected const BOUNDARY = "#--0--#";
     
     /**
      * Create a new visualiser instance capable of spawning its own set of windows.
@@ -201,7 +199,6 @@ class Visualiser
                 usleep(100);
             }
         }
-		//$data = substr($this->inboundBuffer, 0, -strlen(self::TERMINATOR));
         $data = $this->inboundBuffer;
         $this->inboundBuffer = '';     
 		return $data;
