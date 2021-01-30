@@ -50,6 +50,7 @@ class Visualiser
     protected const CLOSE_WINDOW = 2;
     protected const UPDATE_IMG = 3;
     
+    protected const VERSION = 10;
     
     /**
      * Create a new visualiser instance capable of spawning its own set of windows.
@@ -59,13 +60,28 @@ class Visualiser
      */
     public function __construct(bool $logJavaErrorsToFile = false)
     {
-        $dir = __DIR__."/.build";
+        $build = __DIR__."/.build/";
+        $dir = "$build/".self::VERSION;
         $javaFile = __DIR__."/PHEXTVisualiser.java";
         if (! file_exists($javaFile))
             throw new \RuntimeException("The PHEXT Visualiser java file is missing. Please reinstall the package.");
         
         if (! file_exists($dir))
-            mkdir($dir); // create build folder.
+        {
+            // Remove all older versions and create the dir for the current.
+            $rdi = new \RecursiveDirectoryIterator($build, \RecursiveDirectoryIterator::SKIP_DOTS);
+            $files = new \RecursiveIteratorIterator($rdi, \RecursiveIteratorIterator::CHILD_FIRST);
+            foreach($files as $file) 
+            {
+                if ($file->isDir())
+                    rmdir($file->getPathname());
+                else
+                    unlink($file->getPathname());
+            }
+            
+            mkdir($dir); 
+        }
+            
         
         $classFile = "$dir/PHEXTVisualiser.class";
         if (! file_exists($classFile)) {
