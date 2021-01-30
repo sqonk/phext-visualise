@@ -282,6 +282,8 @@ class PHEXTVisualiser implements Runnable {
         }
         
         public void setImage(Image image) {
+            if (this.image != null)
+                this.image.flush();
             this.image = image;
         }
         
