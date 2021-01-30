@@ -1,3 +1,21 @@
+/**
+*
+* Visualise
+* 
+* @package		phext
+* @subpackage	visualise
+* @version		1
+* 
+* @license		MIT see license.txt
+* @copyright	2019-2021 Sqonk Pty Ltd.
+*
+*
+* This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
+
 import java.util.*;
 import javax.swing.*;
 import java.awt.*;
@@ -5,7 +23,6 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.ByteBuffer;
 import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 class PHEXTVisualiser implements Runnable {
@@ -21,10 +38,7 @@ class PHEXTVisualiser implements Runnable {
     static protected final int NEW_WINDOW = 1;
     static protected final int CLOSE_WINDOW = 2;
     static protected final int UPDATE_IMG = 3;
-    
-    static protected final String TERMINATOR = "\0\0";
-    static protected final String BOUNDARY = "#--0--#";
-    
+        
     static public void main(String[] args) 
     {
         sharedInstance = new PHEXTVisualiser();
@@ -48,10 +62,7 @@ class PHEXTVisualiser implements Runnable {
             {
                 try {
                     ByteBuffer data = this.inputQueue.remove();
-                    //int command = Character.getNumericValue(data.charAt(0));
                     int command = data.getInt();
-                    //data = data.substring(1);
-                    //System.err.println("command: "+command);
                     
                     this.dispatchInput(command, data);
                 }
@@ -80,7 +91,7 @@ class PHEXTVisualiser implements Runnable {
         BufferedInputStream stdin = new BufferedInputStream(System.in);
         int blen = 1024*1024;
         byte[] buffer = new byte[blen];
-        //int tlen = this.TERMINATOR.length();
+        
         try
         {
             while (true)
@@ -91,23 +102,19 @@ class PHEXTVisualiser implements Runnable {
                     int upto = Math.min(blen, stdin.available());
                     int bytesRead = stdin.read(buffer, 0, upto);
                     if (bytesRead > -1) { 
-                        //this.inboundData.append(new String(buffer, 0, bytesRead));
+                        
                         this.inboundData.write(buffer, 0, bytesRead);
                         totalRead += bytesRead;
                     }
                 }
-                
-            
-                //int termPos = inboundData.indexOf(this.TERMINATOR);
+                            
                 if (totalRead > 0) {
-                    //String data = inboundData.substring(0, termPos);
                     ByteBuffer packet = ByteBuffer.wrap(this.inboundData.toByteArray());
                     int command = packet.getInt();
                     packet.rewind();
                     this.inputQueue.add(packet);
                 
                     // Remove the data packet from the stream.
-                    //this.inboundData.delete(0, termPos+tlen);
                     this.inboundData = new ByteArrayOutputStream();
                     
                     if (command == UPDATE_IMG)
@@ -142,23 +149,17 @@ class PHEXTVisualiser implements Runnable {
     
     protected void sendOutput(String response) throws java.io.IOException
     {
-        //response = response + this.TERMINATOR;
-        //System.err.println("sending response");
         BufferedOutputStream os = new BufferedOutputStream(System.out);
         os.write(response.getBytes(), 0, response.length());
         os.flush();
     }
     
-    protected void sendAck() throws java.io.IOException {  //System.err.println("sending ack");
+    protected void sendAck() throws java.io.IOException {  
         System.out.print(true);
         System.out.flush();
     }
     
     protected void makeWindow(ByteBuffer data) throws Exception {
-        //String[] items = data.split(this.BOUNDARY);
-        // if (items.length != 4) {
-        //     throw new Exception("Incorrect amount of items supplied to new window: "+items.length);
-        // }
         int width = data.getInt();
         int height = data.getInt();
         int imgCount = data.getInt();
@@ -194,12 +195,11 @@ class PHEXTVisualiser implements Runnable {
     protected void updateImages(ByteBuffer data) throws Exception { ucount++;
         int windowID = data.getInt();
          
-         //Base64.Decoder decoder = Base64.getDecoder();  
         Vector<Image> images = new Vector<Image>();
          
         while (data.remaining() > 0)
         {
-            int length = data.getInt(); //System.err.println("img len "+length);
+            int length = data.getInt(); 
             byte[] imgData = new byte[length];
             data.get(imgData, 0, length); 
             images.add(ImageIO.read(new ByteArrayInputStream(imgData)));
@@ -207,9 +207,6 @@ class PHEXTVisualiser implements Runnable {
          
         ImageWindow win = this.windows.get(new Integer(windowID));
         win.updateImages(images);
-        //System.err.println(ucount);
-        
-        //this.sendAck();
     }
     
     class ImageWindow extends JFrame
