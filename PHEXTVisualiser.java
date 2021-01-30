@@ -163,6 +163,8 @@ class PHEXTVisualiser implements Runnable {
         int width = data.getInt();
         int height = data.getInt();
         int imgCount = data.getInt();
+        int posX = data.getInt();
+        int posY = data.getInt();
         
         int titleLen = data.getInt();
         byte[] tbuf = new byte[titleLen];
@@ -171,7 +173,10 @@ class PHEXTVisualiser implements Runnable {
         
         ImageWindow window = new ImageWindow(title, imgCount, this.nextID);
         window.setSize(width, height);
-        window.setLocationRelativeTo(null);
+        if (posX < 0 || posY < 0)
+            window.setLocationRelativeTo(null);
+        else
+            window.setLocation(posX, posY);
         
         int rows = 1, cols = 1;
         if (imgCount > 1) {

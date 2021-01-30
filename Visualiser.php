@@ -2,6 +2,25 @@
 
 namespace sqonk\phext\visualise;
 
+/**
+*
+* Visualise
+* 
+* @package		phext
+* @subpackage	visualise
+* @version		1
+* 
+* @license		MIT see license.txt
+* @copyright	2019-2021 Sqonk Pty Ltd.
+*
+*
+* This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
+
+
 use \GDImage;
 
 define('PHEXT_BIG_ENDIAN', pack('L', 1) === pack('N', 1));
@@ -206,11 +225,23 @@ class Visualiser
 		$this->quitCallback = $callback;
 	}
     
-    public function open(string $title, int $width, int $height, int $imageCount = 1): ?int
+    /**
+     * Open a new window capable if displaying the given number of images.
+     * 
+     * -- parameters:
+     * @param $title A title to be displayed at the top of the window.
+     * @param $width The width of the window.
+     * @param $height The height of the window.
+     * @param $imageCount The exact amount of images that will be displayed within the window.
+     * @param $posX Starting X co-ordinate the window will be opened on.
+     * @param $posY Starting Y co-ordinate the window will be opened on.
+     * 
+     * @return The unique identifier for the window. This is used to subsequently push image updates in via the `update` method.
+     */
+    public function open(string $title, int $width, int $height, int $imageCount = 1, int $posX = -1, int $posY = -1): ?int
     {
-        //$config = implode(self::BOUNDARY, [$title, $width, $height, $imageCount]);
         $config = be_pack('l', $width).be_pack('l', $height).be_pack('l', $imageCount).
-            be_pack('l', strlen($title)).$title;
+            be_pack('l', $posX).be_pack('l', $posY).be_pack('l', strlen($title)).$title;
         if ($resp = $this->_send(command:self::NEW_WINDOW, data:$config, expectReply:true))
         {
             $id = (int)$resp;
@@ -221,6 +252,20 @@ class Visualiser
         return null;
     }
 	
+    /**
+     * Push a set of updated images to the window with the given window ID. It takes either a GDImage object
+     * or an already encoded image in the form of a string (e.g. data loaded in from file).
+     * 
+     * Standard web formats should be supported such as JPEG, PNG or GIF.
+     * 
+     * The amount of images supplied should exactly match the amount of images the window was initially
+     * configured to take.
+     * 
+     * -- parameters:
+     * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
+     * @param $image A single image to be supplied to the window. Either a GDImage object or an already encoding string of the image data. If the $images array is also supplied then this parameter is ignored. This parameter should be used when the window has only one image.
+     * @param $images An array of images to be supplied to the window. The contents of which should either consist of GDImage objects or already encoded string representations. Use this parameter when the window is configured to take multiple images.
+     */
     public function update(int $windowID, GDImage|string $image = null, ?array $images = null): void
     {
         static $updateCounts = 0; $updateCounts++;
@@ -231,7 +276,7 @@ class Visualiser
         if ($timeDiff = time() - $stats['start'])
             $fps /= $timeDiff;
         
-        println('fps:', $fps);
+        //println('fps:', $fps);
 
         $convert = function($img) {
             $img_str = ($img instanceof GDImage) ? $this->_convertGD($img) : $img;
@@ -257,14 +302,23 @@ class Visualiser
     }
     
     /**
-     * Start a generator loop, with each cycle generating a new image frame
-     * to be drawn on.
+     * Start a generator loop, with each cycle generating a new image frame to be drawn on rendered The image 
+     * to an automatically created window.  The image supplied is a full colour GDImage object. Upon completion 
+     * of the iteration the image will be pushed to the window and displayed. 
      * 
      * The loop will run until the frame limit is reached or the loop is broken via some other means.
+     * 
+     * -- parameters:
+     * @param $width The width of the window.
+     * @param $height The height of the window. 
+     * @param $frames When greater than 0, the total amount of images that will be pushed to the window before the loop exits. Omit or pass in 0 to have the loop continue indefinitely.
+     * @param $title A title to be displayed at the top of the window.
+     * @param $posX Starting X co-ordinate the window will be opened on.
+     * @param $posY Starting Y co-ordinate the window will be opened on.
      */
-    public function animate(int $width, int $height, int $frames = 0, string $title = '')
+    public function animate(int $width, int $height, int $frames = 0, string $title = '', int $posX = -1, int $posY = -1)
     {
-        $id = $this->open(title:$title, width:$width, height:$height);
+        $id = $this->open(title:$title, width:$width, height:$height, posX:$posX, posY:$posY);
         
         $i = 0;
         while ($frames == 0 or ($frames > 0 && $i < $frames))
