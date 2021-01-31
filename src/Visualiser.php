@@ -1,7 +1,6 @@
 <?php declare(strict_types = 1);
 
 namespace sqonk\phext\visualise;
-
 /**
 *
 * Visualise
@@ -22,6 +21,7 @@ namespace sqonk\phext\visualise;
 
 
 use \GDImage;
+use \RecursiveDirectoryIterator;
 
 define('PHEXT_BIG_ENDIAN', pack('L', 1) === pack('N', 1));
 
@@ -34,6 +34,12 @@ function be_pack(string $format, $value): string {
     return $packed;
 }
 
+/**
+ * The primary class of the library. A single Visualiser instance can be used to control all required 
+ * windows and image displays for a single program/script.
+ * 
+ * It contains methods for opening and closing windows as well as pushing all rendered images to them. 
+ */
 class Visualiser
 {
     protected $stdin;
@@ -55,7 +61,7 @@ class Visualiser
      * Create a new visualiser instance capable of spawning its own set of windows.
      * 
      * -- parameters:
-     * @param $logJavaErrorsToFile The PHEXTVisualiser java class logs all exceptions and errors to the StdErr stream. When this parameter is set to TRUE all such erros will be logged to a file in the current working directory. When set to FALSE the same errors will be printed to the console instead.
+     * @param $logJavaErrorsToFile The PHEXTVisualiser java class logs all exceptions and errors to the StdErr stream. When this parameter is set to TRUE all such errors will be logged to a file in the current working directory. When set to FALSE the same errors will be printed to the console instead. Defaults to FALSE.
      */
     public function __construct(bool $logJavaErrorsToFile = false)
     {
@@ -71,8 +77,8 @@ class Visualiser
         if (! file_exists($dir))
         {
             // Remove all older versions and create the dir for the current.
-            $rdi = new \RecursiveDirectoryIterator($build, \RecursiveDirectoryIterator::SKIP_DOTS);
-            $files = new \RecursiveIteratorIterator($rdi, \RecursiveIteratorIterator::CHILD_FIRST);
+            $rdi = new RecursiveDirectoryIterator($build, RecursiveDirectoryIterator::SKIP_DOTS);
+            $files = new RecursiveIteratorIterator($rdi, RecursiveIteratorIterator::CHILD_FIRST);
             foreach($files as $file) 
             {
                 if ($file->isDir())
@@ -204,7 +210,7 @@ class Visualiser
 	/**
 	 * Read the latest event sent downstream from the Visualiser app.
 	 */
-	public function _waitForResponse(): ?string
+	protected function _waitForResponse(): ?string
 	{
         while (strlen($this->inboundBuffer) == 0)
         {
@@ -241,7 +247,8 @@ class Visualiser
 	}
     
     /**
-     * Open a new window capable if displaying the given number of images.
+     * Open a new window capable of displaying the given number of images. The images are automatically laid out
+     * within a grid in the resulting window. 
      * 
      * -- parameters:
      * @param $title A title to be displayed at the top of the window.
@@ -274,7 +281,7 @@ class Visualiser
 	
     /**
      * Push a set of updated images to the window with the given window ID. It takes either a GDImage object
-     * or an already encoded image in the form of a string (e.g. data loaded in from file).
+     * or an already encoded image in the form of a string (e.g. data loaded in from file or a URL).
      * 
      * Standard web formats should be supported such as JPEG, PNG or GIF.
      * 
@@ -283,7 +290,7 @@ class Visualiser
      * 
      * -- parameters:
      * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
-     * @param $image A single image to be supplied to the window. Either a GDImage object or an already encoding string of the image data. If the $images array is also supplied then this parameter is ignored. This parameter should be used when the window has only one image.
+     * @param $image A single image to be supplied to the window. Either a GDImage object or an already encoded string of the image data. If the $images array is also supplied then this parameter is ignored. This parameter should be used when the window has only one image.
      * @param $images An array of images to be supplied to the window. The contents of which should either consist of GDImage objects or already encoded string representations. Use this parameter when the window is configured to take multiple images.
      */
     public function update(int $windowID, GDImage|string $image = null, ?array $images = null): void
@@ -310,8 +317,8 @@ class Visualiser
     }
     
     /**
-     * Start a generator loop, with each cycle generating a new image frame to be drawn on rendered The image 
-     * to an automatically created window.  The image supplied is a full colour GDImage object. Upon completion 
+     * Start a generator loop, with each cycle generating a new image frame to be drawn on, then rendered 
+     * to an automatically created window. The image supplied is a full colour GDImage object. Upon completion 
      * of the iteration the image will be pushed to the window and displayed. 
      * 
      * The loop will run until the frame limit is reached or the loop is broken via some other means.
