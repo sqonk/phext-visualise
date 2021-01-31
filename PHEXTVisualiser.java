@@ -243,6 +243,13 @@ class PHEXTVisualiser implements Runnable {
             setVisible(true);
         }
         
+        protected void finalize() throws Throwable {
+            for (int i = 0; i < this.canvases.size(); i++) {
+                this.canvases.get(i).freeImage();
+            }
+            super.finalize();
+        }
+        
         public void prepareImageAreas() 
         {
             Dimension windowD = this.getSize();
@@ -287,6 +294,11 @@ class PHEXTVisualiser implements Runnable {
         
         public ImageCanvas() {
             
+        }
+        
+        public void freeImage() {
+            if (this.image != null)
+                this.image.flush();
         }
         
         public void setImage(Image image) {
