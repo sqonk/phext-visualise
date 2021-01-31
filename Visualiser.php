@@ -260,6 +260,14 @@ class Visualiser
         
         return null;
     }
+    
+    /**
+     * Close the window with the given window ID, removing it from screen and releasing the memory associated with it.
+     */
+    public function close(int $windowID): void
+    {
+        $this->_send(command:self::CLOSE_WINDOW, data:be_pack('l', $windowID), expectReply:false);
+    }
 	
     /**
      * Push a set of updated images to the window with the given window ID. It takes either a GDImage object

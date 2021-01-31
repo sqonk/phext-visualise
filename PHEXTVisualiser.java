@@ -142,6 +142,10 @@ class PHEXTVisualiser implements Runnable {
                 this.updateImages(data);
                 break;
                 
+            case CLOSE_WINDOW:
+                this.closeWindow(data);
+                break;
+                
             default:
                 throw new Exception("Unknown command received: "+command);
         }
@@ -210,6 +214,13 @@ class PHEXTVisualiser implements Runnable {
          
         ImageWindow win = this.windows.get(new Integer(windowID));
         win.updateImages(images);
+    }
+    
+    protected void closeWindow(ByteBuffer data) throws Exception {
+        int windowID = data.getInt();
+        ImageWindow win = this.windows.get(new Integer(windowID));
+        win.setVisible(false);
+        win.dispose();
     }
     
     class ImageWindow extends JFrame
