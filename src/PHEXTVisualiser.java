@@ -38,6 +38,7 @@ class PHEXTVisualiser implements Runnable {
     static protected final int NEW_WINDOW = 1;
     static protected final int CLOSE_WINDOW = 2;
     static protected final int UPDATE_IMG = 3;
+    static protected final int WINDOW_INFO = 4;
         
     static public void main(String[] args) 
     {
@@ -145,6 +146,10 @@ class PHEXTVisualiser implements Runnable {
                 this.closeWindow(data);
                 break;
                 
+            case WINDOW_INFO:
+                this.getInfo(data);
+                break;
+                
             default:
                 throw new Exception("Unknown command received: "+command);
         }
@@ -221,6 +226,17 @@ class PHEXTVisualiser implements Runnable {
         win.setVisible(false);
         win.freeImages();
         win.dispose();
+    
+    protected void getInfo(ByteBuffer data) throws Exception {
+        int windowID = data.getInt();
+        ImageWindow win = this.windows.get(Integer.valueOf(windowID));
+        
+        Point l = win.getLocation();
+        Dimension d = win.getSize();
+        int imgCount = win.imageCount();
+        String out = String.join("|", ""+d.width, ""+d.height, ""+l.x, ""+l.y, ""+imgCount);
+        
+        this.sendOutput(out);
     }
     
     class ImageWindow extends JFrame
@@ -241,6 +257,10 @@ class PHEXTVisualiser implements Runnable {
     		setTitle(title);  
     		setResizable(true);
             setVisible(true);
+        }
+        
+        public int imageCount() {
+            return this.images.length;
         }
         
         public void freeImages() {

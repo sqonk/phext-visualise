@@ -275,8 +275,20 @@ class Visualiser
      * Close the window with the given window ID, removing it from screen and releasing the memory associated with it.
      */
     public function close(int $windowID): void
+    public function info(int $windowID) : ?array
     {
-        $this->_send(command:self::CLOSE_WINDOW, data:be_pack('l', $windowID), expectReply:false);
+         if ($resp = $this->_send(command:self::WINDOW_INFO, data:be_pack('l', $windowID), expectReply:true)) {
+             $items = explode('|', $resp);
+             if (count($items) != 5)
+                 throw new \Exception("Received unexpected response when retrieving window information.");
+             
+             foreach ($items as $i => &$val)
+                 $items[$i] = (int)$val;
+             
+             return $items;
+         }
+         
+         return null;
     }
 	
     /**
