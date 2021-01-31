@@ -102,7 +102,6 @@ class PHEXTVisualiser implements Runnable {
                     int upto = Math.min(blen, stdin.available());
                     int bytesRead = stdin.read(buffer, 0, upto);
                     if (bytesRead > -1) { 
-                        
                         this.inboundData.write(buffer, 0, bytesRead);
                         totalRead += bytesRead;
                     }
@@ -113,8 +112,8 @@ class PHEXTVisualiser implements Runnable {
                     int command = packet.getInt();
                     packet.rewind();
                     this.inputQueue.add(packet);
-                
-                    // Remove the data packet from the stream.
+                    
+                    // Reset the incoming buffer.
                     this.inboundData = new ByteArrayOutputStream();
                     
                     if (command == UPDATE_IMG)
