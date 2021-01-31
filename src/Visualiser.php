@@ -22,6 +22,7 @@ namespace sqonk\phext\visualise;
 
 use \GDImage;
 use \RecursiveDirectoryIterator;
+use \RecursiveIteratorIterator;
 
 define('PHEXT_BIG_ENDIAN', pack('L', 1) === pack('N', 1));
 
@@ -48,12 +49,13 @@ class Visualiser
     
 	protected bool $alive = false;
 	protected string $inboundBuffer = "";
-    
+    protected string $pathPrefix = '';
     protected $quitCallback;
     
     protected const NEW_WINDOW = 1;
     protected const CLOSE_WINDOW = 2;
     protected const UPDATE_IMG = 3;
+    protected const WINDOW_INFO = 4;
     
     protected const VERSION = 10;
     
@@ -65,8 +67,8 @@ class Visualiser
      */
     public function __construct(bool $logJavaErrorsToFile = false)
     {
-        $build = __DIR__."/.build/";
-        $dir = "$build/".self::VERSION;
+        [$build, $dir] = $this->_buildDir();
+        
         $javaFile = __DIR__."/PHEXTVisualiser.java";
         if (! file_exists($javaFile))
             throw new \RuntimeException("The PHEXT Visualiser java file is missing. Please reinstall the package.");
@@ -89,12 +91,11 @@ class Visualiser
             
             mkdir($dir); 
         }
-            
         
         $classFile = "$dir/PHEXTVisualiser.class";
         if (! file_exists($classFile)) {
             error_log('compiling java class..');
-            `javac -d $dir -encoding UTF8 $javaFile`;
+            `{$this->pathPrefix}javac -d $dir -encoding UTF8 $javaFile`;
         }
         
         error_log('spinning up visualiser instance..');
@@ -108,7 +109,7 @@ class Visualiser
         else
             $fdSpec[] = ['pipe', 'w']; // stderr pipe
         
-		$this->process = proc_open("java -cp $dir PHEXTVisualiser", $fdSpec, $pipes, getcwd());
+		$this->process = proc_open("{$this->pathPrefix}java -cp $dir PHEXTVisualiser", $fdSpec, $pipes, getcwd());
 		if (! is_resource($this->process)) {
 		    throw new \RuntimeException('Unable to launch a Visualiser instance. Perhaps there is a problem with your Java installation or your system is starved of resources?');
 		}
@@ -128,6 +129,13 @@ class Visualiser
 		if ($this->alive)
 			$this->terminate();
 	}
+    
+    private function _buildDir(): array
+    {
+        $build = __DIR__."/.build/";
+        $dir = "$build/".self::VERSION;
+        return [$build, $dir];
+    }
 	
     /**
      * Kill the visualiser instance, closing all associated windows.
@@ -232,6 +240,17 @@ class Visualiser
 	// = public API =
 	// ==============
 	
+    /**
+     * If your command line environment does not have the java and javac tools in its search paths
+     * then you can set the absolute directory path to them.
+     */
+    public function set_java_path(string $pathPrefix): void
+    {
+        if (! str_ends_with($pathPrefix, '/'))
+            $pathPrefix .= '/';
+        $this->pathPrefix = $pathPrefix;
+    }
+    
     /**
      * Provide a callback that is run in the event that the Visualiser app is terminated 
      * by the user or by some other means outside of the script.
