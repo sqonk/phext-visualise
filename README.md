@@ -45,11 +45,13 @@ Likewise Web apps, PHP's primary domain of usage, run over request-response cycl
 
 Both scenarios add a necessary level of complication that adds to the development time.
 
-Maybe you're trialing a proof-of-concept idea that you would like to get up and running quickly, or you have simple requirements for a command line script but would like graphical updates to be displayed on screen without having to vastly change your logic. Visualise can solve this problem by fitting in with your code instead of the other way round.
+Maybe you are trialing a proof-of-concept idea that you would like to get up and running quickly, or you have simple requirements for a command line script but would like graphical updates to be displayed on screen without having to vastly change your logic. Visualise can solve this problem by fitting in with your code instead of the other way round.
 
 ## Why Java?
 
-Native PHP extensions have a nasty habit of breaking with nearly every major release of the language. For the various extensions that supported GUI bindings - as soon as the maintainers lost interest or otherwise moved on, compatibility was lost.
+Native PHP extensions have a nasty habit of breaking with nearly every major release of the language. For the various extensions that supported GUI bindings - as soon as the maintainers lost interest or otherwise moved on, compatibility was lost with successive revisions to the language.
+
+By contrast user-land solutions have a better track record of weathering changes to the language and platform.
 
 Java has been around since the 90s, widely used in enterprise and runs reliably on OS X, Linux and Windows - it's not going anywhere anytime soon. Further to that, the engine comes with [pre-packaged installers available for all three platforms](https://adoptopenjdk.net).
 
@@ -107,9 +109,9 @@ ask('press any key to continue.'); // pause script.
 
 
 
-When utilising only a single window and single image you also have the option using a generator to simplify your code ever further.
+When utilising only a single window and a single image you also have the option using a generator to simplify your code even further.
 
-A simple sine wave animation demonstrates..
+This simple sine wave animation demonstrates the usage:
 
 ```php
 require_once 'vendor/autoload.php';
