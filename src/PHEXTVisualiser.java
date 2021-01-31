@@ -211,14 +211,15 @@ class PHEXTVisualiser implements Runnable {
             images.add(ImageIO.read(new ByteArrayInputStream(imgData)));
         }
          
-        ImageWindow win = this.windows.get(new Integer(windowID));
+        ImageWindow win = this.windows.get(Integer.valueOf(windowID));
         win.updateImages(images);
     }
     
     protected void closeWindow(ByteBuffer data) throws Exception {
         int windowID = data.getInt();
-        ImageWindow win = this.windows.get(new Integer(windowID));
+        ImageWindow win = this.windows.get(Integer.valueOf(windowID));
         win.setVisible(false);
+        win.freeImages();
         win.dispose();
     }
     
@@ -233,7 +234,7 @@ class PHEXTVisualiser implements Runnable {
         public ImageWindow(String title, int imageCount, int id)
         {
             this.title = title;
-            this.id = new Integer(id);
+            this.id = Integer.valueOf(id);
             this.images = new Image[imageCount];
             this.canvases = new Vector<ImageCanvas>();
 
@@ -242,11 +243,10 @@ class PHEXTVisualiser implements Runnable {
             setVisible(true);
         }
         
-        protected void finalize() throws Throwable {
+        public void freeImages() {
             for (int i = 0; i < this.canvases.size(); i++) {
                 this.canvases.get(i).freeImage();
             }
-            super.finalize();
         }
         
         public void prepareImageAreas() 

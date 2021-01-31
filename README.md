@@ -8,30 +8,6 @@ Image frames can either be constructed with GD and passed to Visualise directly 
 
 It uses the Java platform run under a sub-process that binds each window to the parent PHP script using the PCNTL extension.
 
-### Philosophy
-
-When attempting to build simple scripts or a proof of concept the inclination is to keep any output text-based and within the confines of the command line. While this avoids a lot of extra bulk and work necessary to make a program function with a graphical UI, it also restricts the type of information that can be displayed to the user (usually the developer writing the code).
-
-Desktop graphical user interfaces typically come with event loops and other control frameworks that force that you structure your code to fit within their system.
-
-Likewise Web apps, PHP's primary domain of usage, run over request-response cycles that spawn new running instances of a script with every run. 
-
-Both scenarios add a necessary level of complication that adds to the development time.
-
-Maybe you're trialing a proof-of-concept idea that you would like to get up and running quickly, or you have simple requirements for a command line script but would like graphical updates to be displayed on screen without having to vastly change your logic. Visualise can solve this problem by fitting in with your code instead of the other way round.
-
-### Why Java?
-
-Native PHP extensions have a nasty habit of breaking with nearly every major release of the language. For the various extensions that supported GUI bindings - as soon as the maintainers lost interest or otherwise moved on, compatibility was lost.
-
-Java has been around since the 90s, widely used in enterprise and runs reliably on OS X, Linux and Windows - it's not going anywhere anytime soon. Further to that, the engine comes with [pre-packaged installers available for all three platforms](https://adoptopenjdk.net).
-
-The Java side of Visualise requires no 3rd party Java libraries and makes use of tools that have been present in the language for most of its life, such as Swing UI.
-
-Even if I were to disappear off the face of the earth tomorrow then the library should continue to operate reliably for the forceable future.
-
-
-
 ## Install
 
 Via Composer
@@ -46,6 +22,30 @@ API Reference
 ------------
 
 Please see the [API Reference](docs/api/index.md) for full documentation of available methods.
+
+
+
+## Philosophy
+
+When attempting to build simple scripts or a proof of concept the inclination is to keep any output text-based and within the confines of the command line. While this avoids a lot of extra bulk and work necessary to make a program function with a graphical UI, it also restricts the type of information that can be displayed to the user (usually the developer writing the code).
+
+Desktop graphical user interfaces typically come with event loops and other control frameworks that force that you structure your code to fit within their system.
+
+Likewise Web apps, PHP's primary domain of usage, run over request-response cycles that spawn new running instances of a script with every run. 
+
+Both scenarios add a necessary level of complication that adds to the development time.
+
+Maybe you're trialing a proof-of-concept idea that you would like to get up and running quickly, or you have simple requirements for a command line script but would like graphical updates to be displayed on screen without having to vastly change your logic. Visualise can solve this problem by fitting in with your code instead of the other way round.
+
+## Why Java?
+
+Native PHP extensions have a nasty habit of breaking with nearly every major release of the language. For the various extensions that supported GUI bindings - as soon as the maintainers lost interest or otherwise moved on, compatibility was lost.
+
+Java has been around since the 90s, widely used in enterprise and runs reliably on OS X, Linux and Windows - it's not going anywhere anytime soon. Further to that, the engine comes with [pre-packaged installers available for all three platforms](https://adoptopenjdk.net).
+
+The Java side of Visualise requires no 3rd party Java libraries and makes use of tools that have been present in the language for most of its life, such as Swing UI.
+
+Even if I were to disappear off the face of the earth tomorrow then the library should continue to operate reliably for the forceable future.
 
 
 
