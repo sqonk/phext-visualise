@@ -42,7 +42,6 @@ class Visualiser
     
 	protected bool $alive = false;
 	protected string $inboundBuffer = "";
-    protected array $windowStats = [];
     
     protected $quitCallback;
     
@@ -255,12 +254,9 @@ class Visualiser
     {
         $config = be_pack('l', $width).be_pack('l', $height).be_pack('l', $imageCount).
             be_pack('l', $posX).be_pack('l', $posY).be_pack('l', strlen($title)).$title;
+        
         if ($resp = $this->_send(command:self::NEW_WINDOW, data:$config, expectReply:true))
-        {
-            $id = (int)$resp;
-            $this->windowStats[$id] = ['count' => 0, 'start' => time()];
-            return $id;
-        }
+            return (int)$resp;
         
         return null;
     }
@@ -281,16 +277,6 @@ class Visualiser
      */
     public function update(int $windowID, GDImage|string $image = null, ?array $images = null): void
     {
-        static $updateCounts = 0; $updateCounts++;
-        $stats = $this->windowStats[$windowID];
-        $stats['count'] += 1;
-        
-        $fps = $stats['count'];
-        if ($timeDiff = time() - $stats['start'])
-            $fps /= $timeDiff;
-        
-        //println('fps:', $fps);
-
         $convert = function($img) {
             $img_str = ($img instanceof GDImage) ? $this->_convertGD($img) : $img;
             return be_pack('l', strlen($img_str)).$img_str;
@@ -307,9 +293,7 @@ class Visualiser
             
         else
             throw new Exception('Either the $image or $images parameter must be set.');
-        
-        $this->windowStats[$windowID] = $stats; 
-        
+                
         $data = be_pack('l', $windowID).$converted;
         $this->_send(command:self::UPDATE_IMG, data:$data, expectReply:true);
     }

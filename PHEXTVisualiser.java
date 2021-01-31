@@ -194,10 +194,8 @@ class PHEXTVisualiser implements Runnable {
         
         this.sendOutput(window.id().toString());
     }
-    
-    protected int ucount = 0;
-    
-    protected void updateImages(ByteBuffer data) throws Exception { ucount++;
+        
+    protected void updateImages(ByteBuffer data) throws Exception {
         int windowID = data.getInt();
          
         Vector<Image> images = new Vector<Image>();
@@ -232,7 +230,6 @@ class PHEXTVisualiser implements Runnable {
     		setTitle(title);  
     		setResizable(true);
             setVisible(true);
-            setLocationRelativeTo(null);
         }
         
         public void prepareImageAreas() 
