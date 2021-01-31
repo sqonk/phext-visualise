@@ -18,6 +18,16 @@ $ composer require sqonk/phext-visualise
 
 
 
+### Requirements 
+
+- PHP 8.0+
+- PCNTL extension
+- POSIX extension
+- GD extension
+- Java 8+ (Either OracleJDK or OpenJDK). Both the `java` and `javac` tools should be installed as a result.
+
+
+
 API Reference
 ------------
 
