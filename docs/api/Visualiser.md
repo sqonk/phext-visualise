@@ -8,9 +8,12 @@ It contains methods for opening and closing windows as well as pushing all rende
 [__construct](#__construct)
 [__destruct](#__destruct)
 [terminate](#terminate)
+[set_java_path](#set_java_path)
+[compiled](#compiled)
 [on_termination](#on_termination)
 [open](#open)
 [close](#close)
+[info](#info)
 [update](#update)
 [animate](#animate)
 
@@ -38,6 +41,22 @@ No documentation available.
 public function terminate() : void
 ```
 Kill the visualiser instance, closing all associated windows.
+
+
+------
+##### set_java_path
+```php
+public function set_java_path(string $pathPrefix) : void
+```
+If your command line environment does not have the java and javac tools in its search paths then you can set the absolute directory path to them.
+
+
+------
+##### compiled
+```php
+public function compiled() : bool
+```
+Determines if the java class been successfully compiled.
 
 
 ------
@@ -70,9 +89,28 @@ Open a new window capable of displaying the given number of images. The images a
 ------
 ##### close
 ```php
-public function close(int $windowID) : void
+public function close(int $windowID) : bool
 ```
 Close the window with the given window ID, removing it from screen and releasing the memory associated with it.
+
+- **$windowID** The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
+
+**Returns:**  `TRUE` on success.
+
+
+------
+##### info
+```php
+public function info(int $windowID) : ?array
+```
+Retrieve information about the window with the given window ID, such as dimensions, location and image count.
+
+- **$windowID** The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
+
+
+**Throws:**  Exception if the response does not yield the correct amount of items, or an irregular response.
+
+**Returns:**  An array containing the window width, height, x coordinate, y coordinate and image count. Will return `NULL` if no response is received.
 
 
 ------
