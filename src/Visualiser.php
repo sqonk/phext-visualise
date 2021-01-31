@@ -252,6 +252,16 @@ class Visualiser
     }
     
     /**
+     * Determines if the java class been successfully compiled.
+     */
+    public function compiled(): bool
+    {
+        [$build, $dir] = $this->_buildDir();
+        $classFile = "$dir/PHEXTVisualiser.class";
+        return file_exists($classFile);
+    }
+    
+    /**
      * Provide a callback that is run in the event that the Visualiser app is terminated 
      * by the user or by some other means outside of the script.
      * 
