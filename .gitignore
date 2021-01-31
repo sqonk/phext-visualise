@@ -3,3 +3,4 @@ build
 error-output.txt
 test.php
 .build
+vendor
