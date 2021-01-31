@@ -1,12 +1,12 @@
 {
-    "name": "sqonk/phext-plotlib",
-    "description": "PlotLib is a wrapper class for the PHP charting library JPGraph for producing charts in bulk.",
+    "name": "sqonk/phext-visualise",
+    "description": "Visualise is a cross platform non-interactive UI for PHP 8 over the command line SAPI. It displays rendered images in a window with the ability for real-time updates using Java as the engine.",
     "type": "library",
     "require": {
 		"php": "^8.0",
         "sqonk/phext-core": "^1"
     },
-	"keywords": ["graph","chart","plot"],
+	"keywords": ["GUI","visualisation","graphical output"],
     "license": "MIT",
     "authors": [
         {
