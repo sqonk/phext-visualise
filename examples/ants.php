@@ -85,7 +85,7 @@ function main()
 {
     $ants = array_map(fn() => new Ant, range(1, 2));
         
-    $visualiser = new Visualiser(true);
+    $visualiser = new Visualiser;
     $visualiser->on_termination(fn() => exit); // Exit script if GUI is quit.
     
     $id = $visualiser->open(title:'Langtons Ants', width:CANVAS_SIZE, height:CANVAS_SIZE);
