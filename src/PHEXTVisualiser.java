@@ -226,6 +226,9 @@ class PHEXTVisualiser implements Runnable {
         win.setVisible(false);
         win.freeImages();
         win.dispose();
+        
+        this.sendAck();
+    }
     
     protected void getInfo(ByteBuffer data) throws Exception {
         int windowID = data.getInt();

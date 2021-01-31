@@ -273,8 +273,27 @@ class Visualiser
     
     /**
      * Close the window with the given window ID, removing it from screen and releasing the memory associated with it.
+     * 
+     * -- parameters:
+     * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
+     * 
+     * @return TRUE on success.
      */
-    public function close(int $windowID): void
+    public function close(int $windowID): bool
+    {
+        return (bool)$this->_send(command:self::CLOSE_WINDOW, data:be_pack('l', $windowID), expectReply:true);
+    }
+    
+    /**
+     * Retrieve information about the window with the given window ID, such as dimensions, location and image count.
+     * 
+     * -- parameters:
+     * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
+     * 
+     * @throws Exception if the response does not yield the correct amount of items, or an irregular response.
+     * 
+     * @return An array containing the window width, height, x coordinate, y coordinate and image count. Will return NULL if no response is received.
+     */
     public function info(int $windowID) : ?array
     {
          if ($resp = $this->_send(command:self::WINDOW_INFO, data:be_pack('l', $windowID), expectReply:true)) {
