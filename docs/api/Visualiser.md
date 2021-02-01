@@ -1,4 +1,4 @@
-###### PHEXT > [Plotlib](../README.md) > [API Reference](index.md) > Visualiser
+###### PHEXT > [Visualise](../README.md) > [API Reference](index.md) > Visualiser
 ------
 ### Visualiser
 The primary class of the library. A single Visualiser instance can be used to control all required windows and image displays for a single program/script.
@@ -8,6 +8,7 @@ It contains methods for opening and closing windows as well as pushing all rende
 [__construct](#__construct)
 [__destruct](#__destruct)
 [terminate](#terminate)
+[_getCheckSums](#_getchecksums)
 [set_java_path](#set_java_path)
 [compiled](#compiled)
 [on_termination](#on_termination)
@@ -16,24 +17,6 @@ It contains methods for opening and closing windows as well as pushing all rende
 [info](#info)
 [update](#update)
 [animate](#animate)
-
-------
-##### __construct
-```php
-public function __construct(bool $logJavaErrorsToFile = false) 
-```
-Create a new visualiser instance capable of spawning its own set of windows.
-
-- **$logJavaErrorsToFile** The PHEXTVisualiser java class logs all exceptions and errors to the StdErr stream. When this parameter is set to `TRUE` all such errors will be logged to a file in the current working directory. When set to `FALSE` the same errors will be printed to the console instead. Defaults to `FALSE`.
-
-
-------
-##### __destruct
-```php
-public function __destruct() 
-```
-No documentation available.
-
 
 ------
 ##### terminate
@@ -95,6 +78,9 @@ Close the window with the given window ID, removing it from screen and releasing
 
 - **$windowID** The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
 
+
+**Throws:**  InvalidArgumentException If there is no window present for the given window ID.
+
 **Returns:**  `TRUE` on success.
 
 
@@ -108,7 +94,8 @@ Retrieve information about the window with the given window ID, such as dimensio
 - **$windowID** The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
 
 
-**Throws:**  Exception if the response does not yield the correct amount of items, or an irregular response.
+**Throws:**  Exception if the response does not yield the correct amount of items, or an irregular response. 
+**Throws:**  InvalidArgumentException If there is no window present for the given window ID.
 
 **Returns:**  An array containing the window width, height, x coordinate, y coordinate and image count. Will return `NULL` if no response is received.
 
@@ -116,7 +103,7 @@ Retrieve information about the window with the given window ID, such as dimensio
 ------
 ##### update
 ```php
-public function update(int $windowID, GDImage|string|null$image = null, array $images = null) : void
+public function update(int $windowID, GDImage|string $image = null, array $images = null) : void
 ```
 Push a set of updated images to the window with the given window ID. It takes either a GDImage object or an already encoded image in the form of a string (e.g. data loaded in from file or a URL).
 
@@ -127,6 +114,9 @@ The amount of images supplied should exactly match the amount of images the wind
 - **$windowID** The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
 - **$image** A single image to be supplied to the window. Either a GDImage object or an already encoded string of the image data. If the $images array is also supplied then this parameter is ignored. This parameter should be used when the window has only one image.
 - **$images** An array of images to be supplied to the window. The contents of which should either consist of GDImage objects or already encoded string representations. Use this parameter when the window is configured to take multiple images.
+
+
+**Throws:**  InvalidArgumentException If there is no window present for the given window ID.
 
 
 ------

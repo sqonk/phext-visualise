@@ -64,7 +64,7 @@ function generateForClass($cl)
     $name = $class->getShortName();
     
     $out = new SplFileObject(sprintf("%s/api/%s.md", __DIR__, $name), 'w+');
-    $out->fwrite("###### PHEXT > [Plotlib](../README.md) > [API Reference](index.md) > $name\n");
+    $out->fwrite("###### PHEXT > [Visualise](../README.md) > [API Reference](index.md) > $name\n");
     $out->fwrite("------\n");
     $out->fwrite("### $name\n");
     $out->fwrite(formatComment($class->getDocComment())."\n");
@@ -79,6 +79,9 @@ function generateForClass($cl)
     foreach ($methods as $method)
     {
         $m = $method->getName();
+        if (str_starts_with($m, "_"))
+            continue;
+        
         $out->fwrite("##### $m\n");
         $out->fwrite("```php\n");
         
@@ -86,8 +89,11 @@ function generateForClass($cl)
         foreach ($method->getParameters() as $p) {
             $str = '';
             if ($type = $p->getType()) {
-                if ($type instanceof ReflectionUnionType)
-                    $str .= implode('|', array_map(fn($t) => $t->getName(), $type->getTypes()));
+                if ($type instanceof ReflectionUnionType) {
+                    $tn = array_map(fn($t) => $t->getName(), $type->getTypes());
+                    $tn = array_filter($tn, fn($t) => $t != 'null');
+                    $str .= implode('|', $tn)." ";
+                }
                 else
                     $str .= $type->getName()." ";
             }

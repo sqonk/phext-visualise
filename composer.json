@@ -1,12 +1,12 @@
 {
     "name": "sqonk/phext-visualise",
-    "description": "Visualise is a cross platform non-interactive UI for PHP 8 over the command line SAPI. It displays rendered images in a window with the ability for real-time updates using Java as the engine.",
+    "description": "Visualise is a cross platform non-interactive graphics output display for PHP 8 over the command line SAPI. It displays rendered images in a window with the ability for real-time updates using Java as the engine.",
     "type": "library",
     "require": {
 		"php": "^8.0",
         "sqonk/phext-core": "^1"
     },
-	"keywords": ["GUI","visualisation","graphical output"],
+	"keywords": ["GUI","visualisation","graphical output","graphics","display","image"],
     "license": "MIT",
     "authors": [
         {

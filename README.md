@@ -2,7 +2,7 @@
 
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.0-8892BF.svg)](https://php.net/) [![Minimum PHP Version](https://img.shields.io/badge/java-%3E%3D%208-8892BF.svg)](https://adoptopenjdk.net) [![License](https://sqonk.com/opensource/license.svg)](license.txt)
 
-Visualise is a cross platform *non-interactive* UI for PHP 8 over the command line SAPI. It displays rendered images in a window with the ability for real-time updates.
+Visualise is a cross-platform *non-interactive* graphics output display for PHP 8 over the command line SAPI. It displays rendered images in a window with the ability for real-time updates.
 
 Image frames can either be constructed with GD and passed to Visualise directly or produced or acquired via other means (e.g. from file) by providing the pre-rendered image data as a string.
 
