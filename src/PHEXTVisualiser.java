@@ -24,6 +24,9 @@ import java.nio.file.*;
 import java.nio.ByteBuffer;
 import javax.imageio.ImageIO;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.awt.image.RenderedImage;
 
 class PHEXTVisualiser implements Runnable {
     
@@ -39,6 +42,7 @@ class PHEXTVisualiser implements Runnable {
     static protected final int CLOSE_WINDOW = 2;
     static protected final int UPDATE_IMG = 3;
     static protected final int WINDOW_INFO = 4;
+    static protected final int CHECKSUM = 5;
         
     static public void main(String[] args) 
     {
@@ -150,6 +154,10 @@ class PHEXTVisualiser implements Runnable {
                 this.getInfo(data);
                 break;
                 
+            case CHECKSUM:
+                this.getChecksums(data);
+                break;
+                
             default:
                 throw new Exception("Unknown command received: "+command);
         }
@@ -173,13 +181,14 @@ class PHEXTVisualiser implements Runnable {
         int imgCount = data.getInt();
         int posX = data.getInt();
         int posY = data.getInt();
+        boolean testMode = data.getInt() == 1 ? true : false;
         
         int titleLen = data.getInt();
         byte[] tbuf = new byte[titleLen];
         data.get(tbuf, 0, titleLen);
         String title = new String(tbuf);
         
-        ImageWindow window = new ImageWindow(title, imgCount, this.nextID);
+        ImageWindow window = new ImageWindow(title, imgCount, this.nextID, testMode);
         window.setSize(width, height);
         if (posX < 0 || posY < 0)
             window.setLocationRelativeTo(null);
@@ -205,19 +214,28 @@ class PHEXTVisualiser implements Runnable {
         
     protected void updateImages(ByteBuffer data) throws Exception {
         int windowID = data.getInt();
-         
-        Vector<Image> images = new Vector<Image>();
-         
-        while (data.remaining() > 0)
+        ImageWindow win = this.windows.get(Integer.valueOf(windowID));
+        
+        Vector<ImageCanvas> canvases = win.canvases();
+        int csize = canvases.size();
+        
+        int idx = 0;
+        while (data.remaining() > 0 && idx < csize)
         {
             int length = data.getInt(); 
             byte[] imgData = new byte[length];
             data.get(imgData, 0, length); 
-            images.add(ImageIO.read(new ByteArrayInputStream(imgData)));
+            
+            Image img = ImageIO.read(new ByteArrayInputStream(imgData));
+            if (win.testing)
+                canvases.get(idx).setImage(img, imgData);
+            else
+                canvases.get(idx).setImage(img);
+            
+            idx++;
         }
-         
-        ImageWindow win = this.windows.get(Integer.valueOf(windowID));
-        win.updateImages(images);
+        
+        win.updateImages();
     }
     
     protected void closeWindow(ByteBuffer data) throws Exception {
@@ -242,20 +260,30 @@ class PHEXTVisualiser implements Runnable {
         this.sendOutput(out);
     }
     
+    // Used for unit testing.
+    protected void getChecksums(ByteBuffer data) throws Exception {
+        int windowID = data.getInt();
+        ImageWindow win = this.windows.get(Integer.valueOf(windowID));
+        
+        this.sendOutput(win.getChecksums());
+    }
+    
     class ImageWindow extends JFrame
     {
         protected String title;
         protected Integer id;
+        public boolean testing;
         
         protected Image[] images; 
         protected Vector<ImageCanvas> canvases;
         
-        public ImageWindow(String title, int imageCount, int id)
+        public ImageWindow(String title, int imageCount, int id, boolean testing)
         {
             this.title = title;
             this.id = Integer.valueOf(id);
             this.images = new Image[imageCount];
             this.canvases = new Vector<ImageCanvas>();
+            this.testing = testing;
 
     		setTitle(title);  
     		setResizable(true);
@@ -292,27 +320,35 @@ class PHEXTVisualiser implements Runnable {
             return this.id;
         }
         
-        public void updateImages(Vector<Image> images) {
-            int limit = Math.min(images.size(), this.canvases.size());
-            
+        public Vector<ImageCanvas> canvases() {
+            return this.canvases;
+        }
+        
+        public void updateImages() {
             Vector<ImageCanvas> canvases = this.canvases;
-            
-            for (int i = 0; i < limit; i++) {
-                canvases.get(i).setImage(images.get(i));
-            }
-            
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                    for (int i = 0; i < limit; i++)
-                        canvases.get(i).repaint();
+                    for (ImageCanvas canvas : canvases)
+                        canvas.repaint();
                 }
             });
-            
+        }
+        
+        public String getChecksums() throws Exception {
+            StringBuilder chksum = new StringBuilder("");
+            int cnt = this.canvases.size();
+            for (int i = 0; i < cnt; i++) {
+                chksum.append(this.canvases.get(i).getMD5());
+                if (i < cnt-1)
+                    chksum.append("|");
+            }
+            return chksum.toString();
         }
     }
     
     class ImageCanvas extends Canvas {
         private Image image = null;
+        private byte[] imageData;
         
         public ImageCanvas() {
             
@@ -327,6 +363,24 @@ class PHEXTVisualiser implements Runnable {
             if (this.image != null)
                 this.image.flush();
             this.image = image;
+        }
+        
+        public void setImage(Image image, byte[] data) {
+            this.setImage(image);
+            this.imageData = data;
+        }
+        
+        // Used for unit testing
+        public String getMD5() throws Exception {            
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(this.imageData);
+            
+            BigInteger hash = new BigInteger(1, md.digest());
+            String hashtext = hash.toString(16);
+            while (hashtext.length() < 32) {
+                hashtext = "0" + hashtext;
+            }
+            return hashtext;
         }
         
     	public void update(Graphics g) {

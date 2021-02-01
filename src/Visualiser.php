@@ -1,6 +1,7 @@
 <?php declare(strict_types = 1);
 
 namespace sqonk\phext\visualise;
+
 /**
 *
 * Visualise
@@ -23,6 +24,7 @@ namespace sqonk\phext\visualise;
 use \GDImage;
 use \RecursiveDirectoryIterator;
 use \RecursiveIteratorIterator;
+use sqonk\phext\core\arrays;
 
 define('PHEXT_BIG_ENDIAN', pack('L', 1) === pack('N', 1));
 
@@ -51,13 +53,18 @@ class Visualiser
 	protected string $inboundBuffer = "";
     protected string $pathPrefix = '';
     protected $quitCallback;
+    protected array $registeredWindows = [];
     
     protected const NEW_WINDOW = 1;
     protected const CLOSE_WINDOW = 2;
     protected const UPDATE_IMG = 3;
     protected const WINDOW_INFO = 4;
+    protected const CHECKSUMS = 5;
     
     protected const VERSION = 10;
+    
+    // Used for unit testing. Do not enable this for any other means as it increases memory usage.
+    static public bool $_testing = false;
     
     /**
      * Create a new visualiser instance capable of spawning its own set of windows.
@@ -236,6 +243,24 @@ class Visualiser
 		return $data;
 	}
     
+    protected function _verifyID(int $id)
+    {
+        if (! arrays::contains($this->registeredWindows, $id))
+            throw new \InvalidArgumentException("There is no window for ID: $id");
+    }
+    
+    // Internal use for unit testing.
+    public function _getCheckSums(int $windowID) : ?array
+    {
+        $this->_verifyID($windowID);
+        
+         if ($resp = $this->_send(command:self::CHECKSUMS, data:be_pack('l', $windowID), expectReply:true)) {
+             return explode('|', $resp);
+         }
+         
+         return null;
+    }
+    
 	// ==============
 	// = public API =
 	// ==============
@@ -291,11 +316,15 @@ class Visualiser
      */
     public function open(string $title, int $width, int $height, int $imageCount = 1, int $posX = -1, int $posY = -1): ?int
     {
+        $t = self::$_testing ? 1 : 0;
         $config = be_pack('l', $width).be_pack('l', $height).be_pack('l', $imageCount).
-            be_pack('l', $posX).be_pack('l', $posY).be_pack('l', strlen($title)).$title;
+            be_pack('l', $posX).be_pack('l', $posY).be_pack('l', $t).be_pack('l', strlen($title)).$title;
         
-        if ($resp = $this->_send(command:self::NEW_WINDOW, data:$config, expectReply:true))
-            return (int)$resp;
+        if ($resp = $this->_send(command:self::NEW_WINDOW, data:$config, expectReply:true)) {
+            $id = (int)$resp;
+            $this->registeredWindows[] = $id;
+            return $id;
+        }
         
         return null;
     }
@@ -306,11 +335,17 @@ class Visualiser
      * -- parameters:
      * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
      * 
+     * @throws InvalidArgumentException If there is no window present for the given window ID.
+     * 
      * @return TRUE on success.
      */
     public function close(int $windowID): bool
     {
-        return (bool)$this->_send(command:self::CLOSE_WINDOW, data:be_pack('l', $windowID), expectReply:true);
+        $this->_verifyID($windowID);
+        $pass = (bool)$this->_send(command:self::CLOSE_WINDOW, data:be_pack('l', $windowID), expectReply:true);
+        if ($pass)
+            
+        return $pass;
     }
     
     /**
@@ -320,11 +355,14 @@ class Visualiser
      * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
      * 
      * @throws Exception if the response does not yield the correct amount of items, or an irregular response.
+     * @throws InvalidArgumentException If there is no window present for the given window ID.
      * 
      * @return An array containing the window width, height, x coordinate, y coordinate and image count. Will return NULL if no response is received.
      */
     public function info(int $windowID) : ?array
     {
+        $this->_verifyID($windowID);
+        
          if ($resp = $this->_send(command:self::WINDOW_INFO, data:be_pack('l', $windowID), expectReply:true)) {
              $items = explode('|', $resp);
              if (count($items) != 5)
@@ -338,6 +376,7 @@ class Visualiser
          
          return null;
     }
+    
 	
     /**
      * Push a set of updated images to the window with the given window ID. It takes either a GDImage object
@@ -352,9 +391,13 @@ class Visualiser
      * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
      * @param $image A single image to be supplied to the window. Either a GDImage object or an already encoded string of the image data. If the $images array is also supplied then this parameter is ignored. This parameter should be used when the window has only one image.
      * @param $images An array of images to be supplied to the window. The contents of which should either consist of GDImage objects or already encoded string representations. Use this parameter when the window is configured to take multiple images.
+     * 
+     * @throws InvalidArgumentException If there is no window present for the given window ID.
      */
     public function update(int $windowID, GDImage|string $image = null, ?array $images = null): void
     {
+        $this->_verifyID($windowID);
+        
         $convert = function($img) {
             $img_str = ($img instanceof GDImage) ? $this->_convertGD($img) : $img;
             return be_pack('l', strlen($img_str)).$img_str;
