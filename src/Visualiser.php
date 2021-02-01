@@ -249,7 +249,9 @@ class Visualiser
             throw new \InvalidArgumentException("There is no window for ID: $id");
     }
     
-    // Internal use for unit testing.
+    /**
+     * Internal use for unit testing, will not function outside of testing mode.
+     */
     public function _getCheckSums(int $windowID) : ?array
     {
         $this->_verifyID($windowID);

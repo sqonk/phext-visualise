@@ -79,8 +79,6 @@ function generateForClass($cl)
     foreach ($methods as $method)
     {
         $m = $method->getName();
-        if (str_starts_with($m, "_"))
-            continue;
         
         $out->fwrite("##### $m\n");
         $out->fwrite("```php\n");

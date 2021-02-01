@@ -19,11 +19,37 @@ It contains methods for opening and closing windows as well as pushing all rende
 [animate](#animate)
 
 ------
+##### __construct
+```php
+public function __construct(bool $logJavaErrorsToFile = false) 
+```
+Create a new visualiser instance capable of spawning its own set of windows.
+
+- **$logJavaErrorsToFile** The PHEXTVisualiser java class logs all exceptions and errors to the StdErr stream. When this parameter is set to `TRUE` all such errors will be logged to a file in the current working directory. When set to `FALSE` the same errors will be printed to the console instead. Defaults to `FALSE`.
+
+
+------
+##### __destruct
+```php
+public function __destruct() 
+```
+No documentation available.
+
+
+------
 ##### terminate
 ```php
 public function terminate() : void
 ```
 Kill the visualiser instance, closing all associated windows.
+
+
+------
+##### _getCheckSums
+```php
+public function _getCheckSums(int $windowID) : ?array
+```
+Internal use for unit testing, will not function outside of testing mode.
 
 
 ------

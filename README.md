@@ -1,6 +1,6 @@
 # PHEXT Visualise
 
-[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.0-8892BF.svg)](https://php.net/) [![Minimum PHP Version](https://img.shields.io/badge/java-%3E%3D%208-8892BF.svg)](https://adoptopenjdk.net) [![License](https://sqonk.com/opensource/license.svg)](license.txt)
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.0-8892BF.svg)](https://php.net/) [![Minimum PHP Version](https://img.shields.io/badge/java-%3E%3D%208-8892BF.svg)](https://adoptopenjdk.net) [![License](https://sqonk.com/opensource/license.svg)](license.txt) ![Travis-CI](https://travis-ci.org/sqonk/phext-visualise.svg?branch=master)
 
 Visualise is a cross-platform *non-interactive* realtime graphics output display for PHP 8 over the command line SAPI.
 
@@ -10,7 +10,11 @@ It uses the Java platform running under a sub-process that binds each window to 
 
 ## Install
 
-*Via composer upon release (shortly)..*
+Via Composer
+
+``` bash
+$ composer require sqonk/phext-visualise
+```
 
 ### Requirements 
 
