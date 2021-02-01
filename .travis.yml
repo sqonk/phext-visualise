@@ -1,0 +1,29 @@
+language: php
+php:
+    - 8.0
+
+jdk:
+    - oraclejdk8
+    - openjdk8
+    - openjdk9
+    - openjdk10
+    - openjdk11
+    - openjdk12
+    - openjdk13
+    - openjdk14
+    - openjdk15
+     
+env:
+    matrix:
+        - COMPOSER_FLAGS="--prefer-lowest"
+
+        
+install:
+    - travis_retry composer update ${COMPOSER_FLAGS}
+    
+script:
+  - vendor/bin/phpunit --testdox tests
+  
+notifications:
+   on_success: never
+   on_failure: always
