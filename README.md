@@ -22,7 +22,9 @@ $ composer require sqonk/phext-visualise
 - PCNTL extension
 - POSIX extension
 - GD extension
-- Java 8+ (Either OracleJDK or OpenJDK). Both the `java` and `javac` tools should be installed as a result. [Download installer here](https://adoptopenjdk.net)
+- Java 8+ (Either OracleJDK or OpenJDK).
+
+*You must have the full JDK installed, not just the JRE, which installs both java and javac (compiler) tools.*
 
 
 
