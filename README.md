@@ -111,7 +111,7 @@ ask('press any key to continue.'); // pause script.
 
 When utilising only a single window and a single image you also have the option using a generator to simplify your code even further.
 
-This simple sine wave animation demonstrates the usage:
+This simple animation demonstrates the usage:
 
 ```php
 require_once 'vendor/autoload.php';
@@ -119,30 +119,42 @@ require_once 'vendor/autoload.php';
 use sqonk\phext\visualise\Visualiser;
 
 $visualiser = new Visualiser;
-$h = 248;
 
-foreach ($visualiser->animate(width:400, height:250, title:'sine wave', frames:1000) as $count => $img)
-{
-    $black = imagecolorallocate(image:$img, red:0, green:0, blue:0);
-    $i = $count * 4;
-    
-    # prefill white background
-    imagefilledrectangle(image:$img, x1:0, y1:0, x2:399, y2:249, color:imagecolorallocate($img, 255,255,255));
-
-    # diagonal line
-    $angle = (int)(sin(deg2rad($i)) * $h + $h);
-    imageline(image:$img, x1:0, y1:$h / 2, x2:399, y2:$angle, color:$black);
-
-    # sine wave
-    foreach (range(0, 540, 2) as $x) {
-        $y = floor(sin(deg2rad($x + $i)) * ($h / 2)) + 125;
-        imagesetpixel(image:$img, x:$x / 2, y:$y, color:$black);
-    }
+function adjust($sq): void {
+    $sq->size = $sq->dir ? $sq->size + $sq->step : $sq->size - $sq->step;
+    if ($sq->size > 350)
+        $sq->dir = false;
+    else if ($sq->size < 5)
+        $sq->dir = true;
 }
+
+$Sq = named_objectify('size', 'dir', 'step', 'r', 'g', 'b');
+$squares = [ 
+  $Sq(5, true, 10, 147,17,50),  
+  $Sq(20, true, 5, 148,32,146), 
+  $Sq(20, true, 15, 0,0,200)
+];
+foreach ($visualiser->animate(400, 400, title:'Squares', frames:1000, posX:20, posY:50) as $count => $img)
+{
+    # prefill white background
+    $white = imagecolorallocate($img, 255,255,255);
+    imagefilledrectangle(image:$img, x1:0, y1:0, x2:399, y2:399, color:$white);
+    
+    imagesetthickness($img, 3);
+    foreach ($squares as $s) {
+        $r = $s->size / 2;
+        $clr = imagecolorallocate(image:$img, red:$s->r, green:$s->g, blue:$s->b);
+        
+        imagerectangle(image:$img, x1:200-$r, y1:200-$r, x2:200+$r, y2:200+$r, color:$clr);
+        
+        adjust($s);
+    }   
+}
+
 println('completed.');
 ```
 
-![Sine Wave](/Users/sqonk/Projects/other/phpext/visualise/examples/sine.gif)
+![Sine Wave](/Users/sqonk/Projects/other/phpext/visualise/examples/squares.gif)
 
 
 
