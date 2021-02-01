@@ -99,7 +99,7 @@ foreach (sequence(start:1, end:100) as $i)
 ask('press any key to continue.'); // pause script.
 ```
 
-![Graphs](/Users/sqonk/Projects/other/phpext/visualise/examples/graphs.gif)
+![Graphs](examples/graphs.gif)
 
 
 
@@ -148,7 +148,7 @@ foreach ($visualiser->animate(400, 400, title:'Squares', frames:1000, posX:20, p
 println('completed.');
 ```
 
-![Sine Wave](/Users/sqonk/Projects/other/phpext/visualise/examples/squares.gif)
+![Sine Wave](examples/squares.gif)
 
 
 
