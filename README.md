@@ -10,13 +10,7 @@ It uses the Java platform run under a sub-process that binds each window to the 
 
 ## Install
 
-Via Composer
-
-``` bash
-$ composer require sqonk/phext-visualise
-```
-
-
+*Via composer upon release (shortly)..*
 
 ### Requirements 
 
