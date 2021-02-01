@@ -2,11 +2,11 @@
 
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.0-8892BF.svg)](https://php.net/) [![Minimum PHP Version](https://img.shields.io/badge/java-%3E%3D%208-8892BF.svg)](https://adoptopenjdk.net) [![License](https://sqonk.com/opensource/license.svg)](license.txt)
 
-Visualise is a cross-platform *non-interactive* graphics output display for PHP 8 over the command line SAPI. It displays rendered images in a window with the ability for real-time updates.
+Visualise is a cross-platform *non-interactive* realtime graphics output display for PHP 8 over the command line SAPI.
 
-Image frames can either be constructed with GD and passed to Visualise directly or produced or acquired via other means (e.g. from file) by providing the pre-rendered image data as a string.
+Image frames can either be constructed with GD and passed to Visualise directly or produced or acquired via other means (e.g. from file or URL) by providing the pre-rendered image data as a string.
 
-It uses the Java platform run under a sub-process that binds each window to the parent PHP script using the PCNTL extension.
+It uses the Java platform running under a sub-process that binds each window to the parent PHP script using the PCNTL extension.
 
 ## Install
 
@@ -18,7 +18,7 @@ It uses the Java platform run under a sub-process that binds each window to the 
 - PCNTL extension
 - POSIX extension
 - GD extension
-- Java 8+ (Either OracleJDK or OpenJDK). Both the `java` and `javac` tools should be installed as a result.
+- Java 8+ (Either OracleJDK or OpenJDK). Both the `java` and `javac` tools should be installed as a result. [Download installer here](https://adoptopenjdk.net)
 
 
 
@@ -47,11 +47,9 @@ Native PHP extensions have a nasty habit of breaking with nearly every major rel
 
 By contrast user-land solutions have a better track record of weathering changes to the language and platform.
 
-Java has been around since the 90s, widely used in enterprise and runs reliably on OS X, Linux and Windows - it's not going anywhere anytime soon. Further to that, the engine comes with [pre-packaged installers available for all three platforms](https://adoptopenjdk.net).
+Java has been around since the 90s, widely used in enterprise and runs reliably on OS X, Linux and Windows. Further to that, the engine comes with [pre-packaged installers available for all three platforms](https://adoptopenjdk.net).
 
 The Java side of Visualise requires no 3rd party Java libraries and makes use of tools that have been present in the language for most of its life, such as Swing UI.
-
-Even if I were to disappear off the face of the earth tomorrow then the library should continue to operate reliably for the forceable future.
 
 
 
