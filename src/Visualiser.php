@@ -344,10 +344,7 @@ class Visualiser
     public function close(int $windowID): bool
     {
         $this->_verifyID($windowID);
-        $pass = (bool)$this->_send(command:self::CLOSE_WINDOW, data:be_pack('l', $windowID), expectReply:true);
-        if ($pass)
-            
-        return $pass;
+        return (bool)$this->_send(command:self::CLOSE_WINDOW, data:be_pack('l', $windowID), expectReply:true);
     }
     
     /**
