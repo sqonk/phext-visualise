@@ -363,7 +363,7 @@ class Visualiser
      */
     public function info(int $windowID) : ?array
     {
-        $this->_verifyID($windowID);
+         $this->_verifyID($windowID);
         
          if ($resp = $this->_send(command:self::WINDOW_INFO, data:be_pack('l', $windowID), expectReply:true)) {
              $items = explode('|', $resp);
