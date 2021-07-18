@@ -75,7 +75,7 @@ class PHEXTVisualiser implements Runnable {
                     
                 }
                 
-                Thread.sleep(50);
+                Thread.sleep(5);
             }
         }
         catch (Exception error) {
@@ -125,7 +125,7 @@ class PHEXTVisualiser implements Runnable {
                         this.sendAck();
                 }
                 else
-                    Thread.sleep(10);
+                    Thread.sleep(5);
             }
         }
         catch (Exception error) {

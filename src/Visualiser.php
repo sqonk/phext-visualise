@@ -235,7 +235,7 @@ class Visualiser
 
             if (! $read) {
                 $this->_checkStdErr();
-                usleep(100);
+                usleep(5);
             }
         }
         $data = $this->inboundBuffer;
