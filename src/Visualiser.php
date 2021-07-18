@@ -88,7 +88,7 @@ class Visualiser
             // Remove all older versions and create the dir for the current.
             $rdi = new RecursiveDirectoryIterator($build, RecursiveDirectoryIterator::SKIP_DOTS);
             $files = new RecursiveIteratorIterator($rdi, RecursiveIteratorIterator::CHILD_FIRST);
-            foreach($files as $file) 
+            foreach ($files as $file) 
             {
                 if ($file->isDir())
                     rmdir($file->getPathname());
