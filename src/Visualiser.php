@@ -52,7 +52,7 @@ class Visualiser
 	protected bool $alive = false;
 	protected string $inboundBuffer = "";
     protected string $pathPrefix = '';
-    protected ?callable $quitCallback = '';
+    protected $quitCallback = '';
     protected array $registeredWindows = [];
     
     protected const NEW_WINDOW = 1;
