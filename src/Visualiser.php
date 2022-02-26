@@ -234,7 +234,8 @@ class Visualiser
             }
 
             if (! $read) {
-                $this->_checkStdErr();
+                if (! $this->_status())
+                    break;
                 usleep(5);
             }
         }
