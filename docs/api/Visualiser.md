@@ -5,18 +5,18 @@ The primary class of the library. A single Visualiser instance can be used to co
 
 It contains methods for opening and closing windows as well as pushing all rendered images to them.
 #### Methods
-[__construct](#__construct)
-[__destruct](#__destruct)
-[terminate](#terminate)
-[_getCheckSums](#_getchecksums)
-[set_java_path](#set_java_path)
-[compiled](#compiled)
-[on_termination](#on_termination)
-[open](#open)
-[close](#close)
-[info](#info)
-[update](#update)
-[animate](#animate)
+- [__construct](#__construct)
+- [__destruct](#__destruct)
+- [terminate](#terminate)
+- [_getCheckSums](#_getchecksums)
+- [set_java_path](#set_java_path)
+- [compiled](#compiled)
+- [on_termination](#on_termination)
+- [open](#open)
+- [close](#close)
+- [info](#info)
+- [update](#update)
+- [animate](#animate)
 
 ------
 ##### __construct
