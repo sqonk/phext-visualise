@@ -84,9 +84,13 @@ class Ant {
 function main()
 {
     $ants = array_map(fn() => new Ant, range(1, 2));
-        
+    
+    $running = true;    
     $visualiser = new Visualiser;
-    $visualiser->on_termination(fn() => exit); // Exit script if GUI is quit.
+    $visualiser->on_termination(function() use (&$running) {
+        // Exit script if GUI is quit.
+        $running = false;
+    }); 
     
     $id = $visualiser->open(title:'Langtons Ants', width:CANVAS_SIZE, height:CANVAS_SIZE);
     
@@ -97,7 +101,7 @@ function main()
     # fill with white background
     imagefilledrectangle(image:$img, x1:0, y1:0, x2:CANVAS_SIZE-1, y2:CANVAS_SIZE-1, color:$white);
     
-    while (true)
+    while ($running)
     {
         # progress the ants, render immediate state change and move them accordingly.
         foreach ($ants as $ant) 
