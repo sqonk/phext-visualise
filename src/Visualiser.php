@@ -61,7 +61,7 @@ class Visualiser
     protected const WINDOW_INFO = 4;
     protected const CHECKSUMS = 5;
     
-    protected const VERSION = 10;
+    protected const VERSION = 11;
     
     // Used for unit testing. Do not enable this for any other means as it increases memory usage.
     static public bool $_testing = false;

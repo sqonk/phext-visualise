@@ -202,7 +202,7 @@ class PHEXTVisualiser implements Runnable {
         }
         
         window.getContentPane().setLayout(new GridLayout(rows, cols));
-        
+        window.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         window.prepareImageAreas();
         
         this.nextID++; // increment id ready for next window.
