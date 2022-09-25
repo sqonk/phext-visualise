@@ -48,6 +48,7 @@ class Visualiser
     protected $stdin;
     protected $stdout;
     protected $stderr;
+    protected $process;
     
 	protected bool $alive = false;
 	protected string $inboundBuffer = "";
