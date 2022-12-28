@@ -29,7 +29,7 @@ use sqonk\phext\core\arrays;
 define('PHEXT_BIG_ENDIAN', pack('L', 1) === pack('N', 1));
 
 // Pack for forced BIG ENDIAN byte order.
-function be_pack(string $format, $value): string {
+function be_pack(string $format, mixed $value): string {
     $packed = pack($format, $value);
     if (! PHEXT_BIG_ENDIAN) {
         $packed = strrev($packed);
@@ -245,7 +245,7 @@ class Visualiser
 		return $data;
 	}
     
-    protected function _verifyID(int $id)
+    protected function _verifyID(int $id): void
     {
         if (! arrays::contains($this->registeredWindows, $id))
             throw new \InvalidArgumentException("There is no window for ID: $id");
@@ -395,7 +395,7 @@ class Visualiser
      * 
      * @throws InvalidArgumentException If there is no window present for the given window ID.
      */
-    public function update(int $windowID, GDImage|string $image = null, ?array $images = null): void
+    public function update(int $windowID, GDImage|string|null $image = null, ?array $images = null): void
     {
         $this->_verifyID($windowID);
         
@@ -435,7 +435,7 @@ class Visualiser
      * @param $posX Starting X co-ordinate the window will be opened on.
      * @param $posY Starting Y co-ordinate the window will be opened on.
      */
-    public function animate(int $width, int $height, int $frames = 0, string $title = '', int $posX = -1, int $posY = -1)
+    public function animate(int $width, int $height, int $frames = 0, string $title = '', int $posX = -1, int $posY = -1): \Generator
     {
         $id = $this->open(title:$title, width:$width, height:$height, posX:$posX, posY:$posY);
         
