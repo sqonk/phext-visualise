@@ -414,7 +414,7 @@ class Visualiser
         }
             
         else
-            throw new Exception('Either the $image or $images parameter must be set.');
+            throw new \Exception('Either the $image or $images parameter must be set.');
                 
         $data = be_pack('l', $windowID).$converted;
         $this->_send(command:self::UPDATE_IMG, data:$data, expectReply:true);
