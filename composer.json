@@ -4,7 +4,8 @@
     "type": "library",
     "require": {
 		"php": "^8.0",
-        "sqonk/phext-core": "^1"
+        "sqonk/phext-core": "^1",
+        "phpstan/phpstan": "^1.9"
     },
 	"keywords": ["GUI","visualisation","graphical output","graphics","display","image"],
     "license": "MIT",

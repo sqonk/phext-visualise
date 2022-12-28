@@ -45,15 +45,38 @@ function be_pack(string $format, mixed $value): string {
  */
 class Visualiser
 {
+    /** 
+     * @var ?resource 
+     */
     protected $stdin;
+    
+    /** 
+     * @var ?resource 
+     */
     protected $stdout;
+    
+    /** 
+     * @var ?resource 
+     */
     protected $stderr;
+    
+    /** 
+     * @var ?resource 
+     */
     protected $process;
     
 	protected bool $alive = false;
 	protected string $inboundBuffer = "";
     protected string $pathPrefix = '';
+    
+    /** 
+     * @var callable|string
+     */
     protected $quitCallback = '';
+    
+    /** 
+     * @var list<int> 
+     */
     protected array $registeredWindows = [];
     
     protected const NEW_WINDOW = 1;
@@ -71,7 +94,7 @@ class Visualiser
      * Create a new visualiser instance capable of spawning its own set of windows.
      * 
      * -- parameters:
-     * @param $logJavaErrorsToFile The PHEXTVisualiser java class logs all exceptions and errors to the StdErr stream. When this parameter is set to TRUE all such errors will be logged to a file in the current working directory. When set to FALSE the same errors will be printed to the console instead. Defaults to FALSE.
+     * @param bool $logJavaErrorsToFile The PHEXTVisualiser java class logs all exceptions and errors to the StdErr stream. When this parameter is set to TRUE all such errors will be logged to a file in the current working directory. When set to FALSE the same errors will be printed to the console instead. Defaults to FALSE.
      */
     public function __construct(bool $logJavaErrorsToFile = false)
     {
@@ -138,6 +161,9 @@ class Visualiser
 			$this->terminate();
 	}
     
+    /**
+     * @return array{string, string}
+     */
     private function _buildDir(): array
     {
         $build = __DIR__."/.build/";
@@ -234,7 +260,7 @@ class Visualiser
                 $this->inboundBuffer .= $read;
             }
 
-            if (! $read) {
+            if (strlen($read) == 0) {
                 if (! $this->_status())
                     break;
                 usleep(5);
@@ -253,6 +279,8 @@ class Visualiser
     
     /**
      * Internal use for unit testing, will not function outside of testing mode.
+     * 
+     * @return ?list<string>
      */
     public function _getCheckSums(int $windowID) : ?array
     {
@@ -309,14 +337,14 @@ class Visualiser
      * within a grid in the resulting window. 
      * 
      * -- parameters:
-     * @param $title A title to be displayed at the top of the window.
-     * @param $width The width of the window.
-     * @param $height The height of the window.
-     * @param $imageCount The exact amount of images that will be displayed within the window.
-     * @param $posX Starting X co-ordinate the window will be opened on.
-     * @param $posY Starting Y co-ordinate the window will be opened on.
+     * @param string $title A title to be displayed at the top of the window.
+     * @param int $width The width of the window.
+     * @param int $height The height of the window.
+     * @param int $imageCount The exact amount of images that will be displayed within the window.
+     * @param int $posX Starting X co-ordinate the window will be opened on.
+     * @param int $posY Starting Y co-ordinate the window will be opened on.
      * 
-     * @return The unique identifier for the window. This is used to subsequently push image updates in via the `update` method.
+     * @return ?int The unique identifier for the window. This is used to subsequently push image updates in via the `update` method.
      */
     public function open(string $title, int $width, int $height, int $imageCount = 1, int $posX = -1, int $posY = -1): ?int
     {
@@ -337,11 +365,11 @@ class Visualiser
      * Close the window with the given window ID, removing it from screen and releasing the memory associated with it.
      * 
      * -- parameters:
-     * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
+     * @param int $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
      * 
-     * @throws InvalidArgumentException If there is no window present for the given window ID.
+     * @throws \InvalidArgumentException If there is no window present for the given window ID.
      * 
-     * @return TRUE on success.
+     * @return bool TRUE on success.
      */
     public function close(int $windowID): bool
     {
@@ -353,12 +381,12 @@ class Visualiser
      * Retrieve information about the window with the given window ID, such as dimensions, location and image count.
      * 
      * -- parameters:
-     * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
+     * @param int $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
      * 
-     * @throws Exception if the response does not yield the correct amount of items, or an irregular response.
-     * @throws InvalidArgumentException If there is no window present for the given window ID.
+     * @throws \Exception if the response does not yield the correct amount of items, or an irregular response.
+     * @throws \InvalidArgumentException If there is no window present for the given window ID.
      * 
-     * @return An array containing the window width, height, x coordinate, y coordinate and image count. Will return NULL if no response is received.
+     * @return ?array{int, int, int, int, int} An array containing the window width, height, x coordinate, y coordinate and image count. Will return NULL if no response is received.
      */
     public function info(int $windowID) : ?array
     {
@@ -389,11 +417,11 @@ class Visualiser
      * configured to take.
      * 
      * -- parameters:
-     * @param $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
-     * @param $image A single image to be supplied to the window. Either a GDImage object or an already encoded string of the image data. If the $images array is also supplied then this parameter is ignored. This parameter should be used when the window has only one image.
-     * @param $images An array of images to be supplied to the window. The contents of which should either consist of GDImage objects or already encoded string representations. Use this parameter when the window is configured to take multiple images.
+     * @param int $windowID The unique ID of the window that the images will be displayed in. This is obtained when the window is first created using the `open` method.
+     * @param \GDImage|string|null $image A single image to be supplied to the window. Either a GDImage object or an already encoded string of the image data. If the $images array is also supplied then this parameter is ignored. This parameter should be used when the window has only one image.
+     * @param ?list<\GDImage|string> $images An array of images to be supplied to the window. The contents of which should either consist of GDImage objects or already encoded string representations. Use this parameter when the window is configured to take multiple images.
      * 
-     * @throws InvalidArgumentException If there is no window present for the given window ID.
+     * @throws \InvalidArgumentException If there is no window present for the given window ID.
      */
     public function update(int $windowID, GDImage|string|null $image = null, ?array $images = null): void
     {
@@ -428,12 +456,14 @@ class Visualiser
      * The loop will run until the frame limit is reached or the loop is broken via some other means.
      * 
      * -- parameters:
-     * @param $width The width of the window.
-     * @param $height The height of the window. 
-     * @param $frames When greater than 0, the total amount of images that will be pushed to the window before the loop exits. Omit or pass in 0 to have the loop continue indefinitely.
-     * @param $title A title to be displayed at the top of the window.
-     * @param $posX Starting X co-ordinate the window will be opened on.
-     * @param $posY Starting Y co-ordinate the window will be opened on.
+     * @param int $width The width of the window.
+     * @param int $height The height of the window. 
+     * @param int $frames When greater than 0, the total amount of images that will be pushed to the window before the loop exits. Omit or pass in 0 to have the loop continue indefinitely.
+     * @param string $title A title to be displayed at the top of the window.
+     * @param int $posX Starting X co-ordinate the window will be opened on.
+     * @param int $posY Starting Y co-ordinate the window will be opened on.
+     * 
+     * @return \Generator
      */
     public function animate(int $width, int $height, int $frames = 0, string $title = '', int $posX = -1, int $posY = -1): \Generator
     {
