@@ -136,7 +136,7 @@ class Visualiser
 		    ['pipe', 'w'], // stdout
 		];
         if ($logJavaErrorsToFile)
-            $fdSpec[] = ['file', __DIR__.'/error-output.txt', 'a'];
+            $fdSpec[] = ['file', getcwd().'/error-output.txt', 'a'];
         else
             $fdSpec[] = ['pipe', 'w']; // stderr pipe
         
