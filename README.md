@@ -1,6 +1,6 @@
 # PHEXT Visualise
 
-[![Minimum PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208-yellow)](https://php.net/) [![Minimum PHP Version](https://img.shields.io/badge/Java-%3E%3D%208-purple)](https://adoptopenjdk.net) [![License](https://sqonk.com/opensource/license.svg)](license.txt) [![Travis-CI](https://app.travis-ci.com/sqonk/phext-visualise.svg?branch=master)](https://app.travis-ci.com/github/sqonk/phext-visualise)
+[![Minimum PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208-yellow)](https://php.net/) [![Minimum PHP Version](https://img.shields.io/badge/Java-%3E%3D%208-purple)](https://adoptopenjdk.net) [![License](https://sqonk.com/opensource/license.svg)](license.txt) 
 
 Visualise is a cross-platform *non-interactive* realtime graphics output display for PHP 8 over the command line SAPI.
 
