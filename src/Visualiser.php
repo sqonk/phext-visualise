@@ -126,7 +126,7 @@ class Visualiser
         $classFile = "$dir/PHEXTVisualiser.class";
         if (! file_exists($classFile) or defined('FORCE_VISUALISER_RECOMPILE')) {
             error_log('compiling java class..');
-            `{$this->pathPrefix}javac -d $dir -encoding UTF8 $javaFile`;
+            shell_exec("{$this->pathPrefix}javac -d $dir -encoding UTF8 $javaFile");
         }
         
         error_log('spinning up visualiser instance..');
